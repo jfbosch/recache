@@ -33,7 +33,7 @@ Samples
 
 Does it work?
 =============
-Yes it works exceptionally well. We have it running in production caching anything from lookups to search results to templates. It has given us incredible performance improvements.
+Yes it works exceptionally well. We have it running in production, caching anything from lookups to search results to templates to types for dependency injection. It has given us incredible performance improvements.
 Once you start using it for one thing, you will probably find other places to plug it in as well.
 
 How to get it?
