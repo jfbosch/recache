@@ -26,6 +26,13 @@ e.g. Cache<int, string>, or Cache<string, MyFunkyClass>.
 
 The cache is transparent. This means you set it up with a loader func, and when you hit the cache the first time, before it has been cached, it will invoke your provided loader func to go and fetch the value from anywhere, in any way you would like. It then caches the value, and returns it. Next time you hit the same key, providing the value is not yet stale as per your configured expiry timeout, you will get the same value back, but just much, much faster than the first time.
 
+There is also a self-refreshing version.
+e.g. SelfRefreshingCache<int, string>.
+Once a key is in the cache, it will go and refresh itself on a configurable schedule. This means that the clients of the cache, after the very first load, will never see the performance hit again of fetching the fresh values through the loader func from the data source.
+It works on a generational model. While generation 2 is being fetch asynchronously in the background, the cache will keep serving up generation 1 to any clients that hit that key. The moment generation 2 is available, it replaces generation 1. In this way, the cache stays fresh, but there is no occasional delay as a client hits an expired cache entry.
+
+It is built on ConcurrentDictionary<TKey, TValue>, so it is concurrency / thread safe.
+
 Samples
 =======
 (Still to come)
