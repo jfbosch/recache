@@ -9,14 +9,14 @@ Because sometimes an in-memory cache is really the bettor option over an out-of-
 
 The skinny on Features
 ========
-Fast
-Generic
-Transparent
-Concurrency Safe
-Expiry Configuration
-Max Size Indicator
-Auto Flush Stale Entries
-Optionally Self-Refreshing
+* Fast
+* Generic
+* Transparent
+* Concurrency Safe
+* Expiry Configuration
+* Max Size Indicator
+* Auto Flush Stale Entries
+* Optionally Self-Refreshing
 
 What does it do?
 ================
