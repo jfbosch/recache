@@ -46,4 +46,4 @@ Once you start using it for one thing, you will probably find other places to pl
 How to get it?
 ==============
 At the moment there is no nuget package for it. We might add it in the future.
-For now, just crab this tiny project, build it, reference it, and off you go.
+For now, just grab this tiny project, build it, reference it, and off you go.
