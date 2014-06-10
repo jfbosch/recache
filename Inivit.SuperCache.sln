@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inivit.SuperCache", "Inivit.SuperCache\Inivit.SuperCache.csproj", "{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{D61D9B46-EE12-4DA4-9221-F2B17016C386}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		auto360|Any CPU = auto360|Any CPU
@@ -45,6 +47,24 @@ Global
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Testing|Any CPU.Build.0 = Testing|Any CPU
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Testing|x64.ActiveCfg = Testing|x64
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Testing|x64.Build.0 = Testing|x64
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.auto360|Any CPU.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.auto360|Any CPU.Build.0 = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.auto360|x64.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Cars360|Any CPU.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Cars360|Any CPU.Build.0 = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Cars360|x64.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Release|x64.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Staging|Any CPU.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Staging|Any CPU.Build.0 = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Staging|x64.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Testing|Any CPU.ActiveCfg = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Testing|Any CPU.Build.0 = Release|Any CPU
+		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Testing|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
