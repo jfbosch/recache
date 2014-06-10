@@ -21,14 +21,9 @@ namespace Inivit.SuperCache
 	/// <typeparam name="TValue"></typeparam>
 	public class SelfRefreshingCache<TKey, TValue> : ICache<TKey, TValue>
 	{
-		private readonly String _cacheRefreshedMetric;
-		private readonly String _cacheRefreshedGenerationMetric;
-
 		private int _currentGeneration = 0;
 		private System.Timers.Timer _refresherTimer;
 		private readonly SelfRefreshingCacheOptions _options;
-
-		public string Name { get { return _generationCache.Name; } }
 
 		// The backing, generation cache, with the int part of the key being the generation of the cache entry.
 		private ICache<Tuple<TKey, int>, TValue> _generationCache;
@@ -67,13 +62,9 @@ namespace Inivit.SuperCache
 			};
 
 			_generationCache = new Cache<Tuple<TKey, int>, TValue>(
-				cacheName,
 				new TupleComparer<TKey, int>(),
 				options.StandardCacheOptions,
 				versionLoderFunction);
-
-			_cacheRefreshedMetric = string.Format("cache.{0}.self_refreshing.refreshed", cacheName);
-			_cacheRefreshedGenerationMetric = string.Format("cache.{0}.self_refreshing.current_generation", cacheName);
 
 			_refresherTimer = new System.Timers.Timer(options.RefreshInterval.TotalMilliseconds);
 			_refresherTimer.Elapsed += RefreshCache;

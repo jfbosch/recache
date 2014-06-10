@@ -5,7 +5,6 @@ namespace Inivit.SuperCache
 {
 	interface ICache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
 	{
-		string Name { get; }
 		TValue Get(TKey key);
 		TValue Get(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
 		TValue GetOrLoad(TKey key);

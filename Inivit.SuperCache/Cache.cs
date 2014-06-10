@@ -16,14 +16,6 @@ namespace Inivit.SuperCache
 		private CacheOptions _options;
 		private Timer _flushTimer;
 
-		private readonly String _cacheName;
-		private readonly String _cacheHitMetric;
-		private readonly String _cacheMissedMetric;
-		private readonly String _cacheStaleHitMetric;
-		private readonly String _cacheItemCountMetric;
-
-		public string Name { get { return _cacheName; } }
-
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.
 		/// </summary>
@@ -37,28 +29,16 @@ namespace Inivit.SuperCache
 		public int Count { get { return this._cachedEntries.Count; } }
 
 		public Cache(
-			string cacheName,
 			CacheOptions options)
-			: this(cacheName, options, null)
+			: this(options, null)
 		{
 		}
 
 		public Cache(
-			string cacheName,
 			CacheOptions options,
 			Func<TKey, TValue> loaderFunction)
 		{
-			if (string.IsNullOrWhiteSpace(cacheName))
-				throw new ArgumentException("cacheName cannot be null or a blank string.");
-			if (cacheName.Contains(" ") || cacheName.Contains("."))
-				throw new ArgumentException("cacheName may not contain a . or a space.");
 			this.SetOptions(options);
-
-			_cacheName = cacheName;
-			_cacheHitMetric = string.Format("cache.{0}.hit", cacheName);
-			_cacheMissedMetric = string.Format("cache.{0}.missed", _cacheName);
-			_cacheStaleHitMetric = string.Format("cache.{0}.stale_hit", _cacheName);
-			_cacheItemCountMetric = string.Format("cache.{0}.item_count", _cacheName);
 
 			LoaderFunction = loaderFunction;
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>();
@@ -66,20 +46,18 @@ namespace Inivit.SuperCache
 		}
 
 		public Cache(
-			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options)
-			: this(cacheName, comparer, options, null)
+			: this(comparer, options, null)
 		{
 
 		}
 
 		public Cache(
-			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options,
 			Func<TKey, TValue> loaderFunction)
-			: this(cacheName, options, loaderFunction)
+			: this(options, loaderFunction)
 		{
 			if (comparer == null)
 				throw new ArgumentNullException("comparer");
