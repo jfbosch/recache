@@ -14,8 +14,8 @@ The skinny on Features
 * Generic
 * Transparent
 * Concurrency Safe
-* Expiry Configuration
 * Max Size Indicator
+* Expiry Configuration
 * Auto Flush Stale Entries
 * Optionally Self-Refreshing
 
