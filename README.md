@@ -9,6 +9,7 @@ Because sometimes an in-memory cache is really the bettor option over an out-of-
 
 The skinny on Features
 ========
+* Simple
 * Fast
 * Generic
 * Transparent
