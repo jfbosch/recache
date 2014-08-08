@@ -103,6 +103,8 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Fluent.cs" />
+    <Compile Include="CacheBuilder.cs" />
     <Compile Include="SelfRefreshingCacheOptions.cs" />
     <Compile Include="SelfRefreshingCache.cs" />
     <Compile Include="Cache.cs" />
