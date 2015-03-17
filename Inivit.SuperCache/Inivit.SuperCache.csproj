@@ -103,8 +103,11 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CircuitBreakerTimeoutException.cs" />
     <Compile Include="Fluent.cs" />
     <Compile Include="CacheBuilder.cs" />
+    <Compile Include="ISelfRefreshingCache.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="SelfRefreshingCacheOptions.cs" />
     <Compile Include="SelfRefreshingCache.cs" />
     <Compile Include="Cache.cs" />

@@ -6,22 +6,42 @@ namespace Inivit.SuperCache
 	public class TupleComparer<TItem1, TItem2>
 		: IEqualityComparer<Tuple<TItem1, TItem2>>
 	{
-		public bool Compare<T>(T x, T y)
+		private IEqualityComparer<TItem1> _item1Comparer;
+		private IEqualityComparer<TItem2> _item2Comparer;
+
+		public TupleComparer()
+		{
+		}
+
+		public TupleComparer(
+			IEqualityComparer<TItem1> item1Comparer,
+			IEqualityComparer<TItem2> item2Comparer)
+		{
+			_item1Comparer = item1Comparer;
+			_item2Comparer = item2Comparer;
+		}
+
+		public bool DefaultCompareEquals<T>(T x, T y)
 		{
 			return EqualityComparer<T>.Default.Equals(x, y);
 		}
 
 		public bool Equals(Tuple<TItem1, TItem2> x, Tuple<TItem1, TItem2> y)
 		{
-			if (object.ReferenceEquals(null, x) ^ object.ReferenceEquals(null, y))
+			if (ReferenceEquals(null, x) ^ ReferenceEquals(null, y))
 				return false;
-			if (object.ReferenceEquals(null, x) && object.ReferenceEquals(null, y))
+			if (ReferenceEquals(null, x) && ReferenceEquals(null, y))
 				return true;
 
-			if (this.Compare(x.Item1, y.Item1) && this.Compare(x.Item2, y.Item2))
-				return true;
-			else
-				return false;
+			Func<TItem1, TItem1, bool> item1sAreEqual = DefaultCompareEquals;
+			if (_item1Comparer != null)
+				item1sAreEqual = _item1Comparer.Equals;
+
+			Func<TItem2, TItem2, bool> item2sAreEqual = DefaultCompareEquals;
+			if (_item2Comparer != null)
+				item2sAreEqual = _item2Comparer.Equals;
+
+			return item1sAreEqual(x.Item1, y.Item1) && item2sAreEqual(x.Item2, y.Item2);
 		}
 
 		public int GetHashCode(Tuple<TItem1, TItem2> obj)
@@ -29,8 +49,17 @@ namespace Inivit.SuperCache
 			if (obj == null)
 				return -1;
 			int hash = 0;
-			hash += obj.Item1.GetHashCode();
-			hash += obj.Item2.GetHashCode();
+
+			if (_item1Comparer != null)
+				hash += _item1Comparer.GetHashCode(obj.Item1);
+			else
+				hash += obj.Item1.GetHashCode();
+
+			if (_item2Comparer != null)
+				hash += _item2Comparer.GetHashCode(obj.Item2);
+			else
+				hash += obj.Item2.GetHashCode();
+
 			return hash;
 		}
 	}

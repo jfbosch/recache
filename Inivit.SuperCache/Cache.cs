@@ -2,16 +2,20 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Timers;
+using System.Threading.Tasks;
 
 namespace Inivit.SuperCache
 {
 	/* Read the following link and understand how ConcurrentDictionary works before modifying this class.
 	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
 	 */
+
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
+		private ConcurrentDictionary<TKey, TKey> _keysBusyLoading;
 		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
 		private Timer _flushTimer;
@@ -22,11 +26,11 @@ namespace Inivit.SuperCache
 		public Func<TKey, TValue> LoaderFunction { get; set; }
 
 		/// <summary>
-		/// Returns the number of items in the cache at the moment this property was invoked. It delegates
-		/// to the internal ConcurrentDictionary<TKey, TValue>.Count which acquires all internal locks.
-		/// As such, it causes contention and should be used sparingly.
+		/// Returns the number of items in the cache by enumerating them (non-locking).
 		/// </summary>
-		public int Count { get { return this._cachedEntries.Count; } }
+		public int Count { get { return this.Items.Count(); } }
+
+		public IEnumerable<KeyValuePair<TKey, TValue>> Items { get { return _cachedEntries.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value.CachedValue)); } }
 
 		public Cache(
 			CacheOptions options)
@@ -41,6 +45,7 @@ namespace Inivit.SuperCache
 			this.SetOptions(options);
 
 			LoaderFunction = loaderFunction;
+			_keysBusyLoading = new ConcurrentDictionary<TKey, TKey>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>();
 			this.InitializeFlushTimer();
 		}
@@ -50,7 +55,6 @@ namespace Inivit.SuperCache
 			CacheOptions options)
 			: this(comparer, options, null)
 		{
-
 		}
 
 		public Cache(
@@ -62,6 +66,7 @@ namespace Inivit.SuperCache
 			if (comparer == null)
 				throw new ArgumentNullException("comparer");
 
+			_keysBusyLoading = new ConcurrentDictionary<TKey, TKey>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>(comparer);
 			this.InitializeFlushTimer();
 		}
@@ -74,8 +79,18 @@ namespace Inivit.SuperCache
 				_flushTimer.Elapsed += (sender, eventArgs) =>
 				{
 					_flushTimer.Stop();
-					this.FlushInvalidatedEntries();
-					_flushTimer.Start();
+					try
+					{
+						this.FlushInvalidatedEntries();
+					}
+					catch (Exception)
+					{
+						throw;
+					}
+					finally
+					{
+						_flushTimer.Start();
+					}
 				};
 				_flushTimer.Start();
 			}
@@ -140,6 +155,8 @@ namespace Inivit.SuperCache
 					if (resetExpiryTimeoutIfAlreadyCached)
 						entry.TimeLoaded = DateTime.Now;
 
+					if (this.HitCallback != null)
+						this.HitCallback(key, entry);
 					return entry.CachedValue;
 				}
 			}
@@ -160,6 +177,9 @@ namespace Inivit.SuperCache
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
+				if (this.HitCallback != null)
+					this.HitCallback(key, entry);
+
 				if (resetExpiryTimeoutIfAlreadyCached)
 					entry.TimeLoaded = DateTime.Now;
 				return entry.CachedValue;
@@ -173,12 +193,64 @@ namespace Inivit.SuperCache
 			if (loaderFunction == null)
 				throw new ArgumentNullException("loaderFunction");
 
-			var entry = new CacheEntry<TValue>();
-			entry.CachedValue = loaderFunction(key);
+			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-			entry.TimeLoaded = DateTime.Now;
-			_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
+			CacheEntry<TValue> entry;
+			bool isNewKey = _keysBusyLoading.TryAdd(key, key);
+			if (isNewKey)
+			{
+				try
+				{
+					entry = new CacheEntry<TValue>();
+					entry.CachedValue = loaderFunction(key);
+					entry.TimeLoaded = DateTime.Now;
+					_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
+				}
+				finally
+				{
+					TKey throwaway;
+					_keysBusyLoading.TryRemove(key, out throwaway);
+				}
+			}
+			else // Key is already busy loading
+			{
+				// Wait for the key busy being cached to complete so that we can return it's value for this thread too. But stop waiting when the timeout is reached.
+				var cancellation = new System.Threading.CancellationTokenSource();
+				var pollingTask = PollForEntry(key, cancellation.Token);
+				if (Task.WaitAll(new Task[] { pollingTask }, _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey))
+					entry = pollingTask.Result;
+				else
+				{
+					cancellation.Cancel(false);
+					throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
+				}
+			}
+
+			stopwatch.Stop();
+
+			if (this.MissedCallback != null)
+				this.MissedCallback(key, entry, (int)stopwatch.ElapsedMilliseconds);
+
 			return entry;
+		}
+
+		private Task<CacheEntry<TValue>> PollForEntry(TKey key, System.Threading.CancellationToken cancellationToken)
+		{
+			Func<CacheEntry<TValue>> poller = () =>
+			{
+				while (true)
+				{
+					if (cancellationToken.IsCancellationRequested)
+						return null;
+
+					CacheEntry<TValue> e;
+					if (_cachedEntries.TryGetValue(key, out e))
+						return e;
+					else
+						System.Threading.Thread.Sleep(1);
+				}
+			};
+			return Task.Run<CacheEntry<TValue>>(poller, cancellationToken);
 		}
 
 		public bool Invalidate(TKey key)
@@ -201,6 +273,10 @@ namespace Inivit.SuperCache
 
 		public void FlushInvalidatedEntries()
 		{
+			var entriesBeforeFlush = _cachedEntries.ToList();
+			var stopwatch = new Stopwatch();
+			stopwatch.Start();
+
 			// Firsh flush stale entries.
 			var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 			var remainingEntries = new List<KeyValuePair<TKey, CacheEntry<TValue>>>();
@@ -234,6 +310,30 @@ namespace Inivit.SuperCache
 					remainingEntries.Remove(entry);
 				}
 			}
+
+			stopwatch.Stop();
+			ExecuteFlushCallback(entriesBeforeFlush, remainingEntries, stopwatch.ElapsedMilliseconds);
+		}
+
+		private void ExecuteFlushCallback(List<KeyValuePair<TKey, CacheEntry<TValue>>> entriesBeforeFlush, List<KeyValuePair<TKey, CacheEntry<TValue>>> remainingEntries, long elapsedMilliseconds)
+		{
+			if (FlushCallback != null)
+			{
+				var clientContexts = entriesBeforeFlush
+					.Union(remainingEntries)
+					.Select(entry => entry.Value.ClientContext)
+					.Distinct()
+					.ToList();
+
+				long elapsedMillisecondsPart = (long)elapsedMilliseconds.SafeDivideBy(clientContexts.Count, elapsedMilliseconds);
+				foreach (var clientContext in clientContexts)
+				{
+					var beforeFlushCount = entriesBeforeFlush.Count(entry => entry.Value.ClientContext == clientContext);
+					var remainingCount = remainingEntries.Count(entry => entry.Value.ClientContext == clientContext);
+					var itemsFlushed = beforeFlushCount - remainingCount;
+					FlushCallback(remainingCount, itemsFlushed, clientContext, elapsedMillisecondsPart);
+				}
+			}
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -244,6 +344,14 @@ namespace Inivit.SuperCache
 		public IEnumerator<KeyValuePair<TKey, CacheEntry<TValue>>> GetEnumerator()
 		{
 			return _cachedEntries.GetEnumerator();
+		}
+
+		public bool TryAdd(TKey key, TValue value)
+		{
+			var entry = new CacheEntry<TValue>();
+			entry.CachedValue = value;
+			entry.TimeLoaded = DateTime.Now;
+			return _cachedEntries.TryAdd(key, entry);
 		}
 
 		public void Dispose()
@@ -274,5 +382,10 @@ namespace Inivit.SuperCache
 			}
 		}
 
+		public Action<TKey, CacheEntry<TValue>> HitCallback { get; set; }
+
+		public Action<TKey, CacheEntry<TValue>, int> MissedCallback { get; set; }
+
+		public Action<long, long, string, long> FlushCallback { get; set; }
 	}
 }

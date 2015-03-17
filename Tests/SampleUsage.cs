@@ -59,8 +59,6 @@ namespace Tests
 				var value = cache.GetOrLoad(key);
 				Assert.AreNotEqual(firstHitValues[key], value);
 			}
-
-
 		}
 
 		[TestMethod]

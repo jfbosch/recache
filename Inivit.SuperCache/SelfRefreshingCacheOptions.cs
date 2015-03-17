@@ -11,7 +11,7 @@ namespace Inivit.SuperCache
 		public SelfRefreshingCacheOptions()
 		{
 			// Set some logical defaults.
-			this.StandardCacheOptions = new CacheOptions();
+			StandardCacheOptions = new CacheOptions();
 		}
 	}
 }

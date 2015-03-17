@@ -19,14 +19,17 @@ namespace Inivit.SuperCache
 	/// </summary>
 	/// <typeparam name="TKey"></typeparam>
 	/// <typeparam name="TValue"></typeparam>
-	public class SelfRefreshingCache<TKey, TValue> : ICache<TKey, TValue>
+	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingCache<TKey, TValue>
 	{
-		private int _currentGeneration = 0;
+		private volatile int _currentGeneration = 0;
 		private System.Timers.Timer _refresherTimer;
 		private readonly SelfRefreshingCacheOptions _options;
 
 		// The backing, generation cache, with the int part of the key being the generation of the cache entry.
 		private ICache<Tuple<TKey, int>, TValue> _generationCache;
+
+		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
+		private Action<TKey, CacheEntry<TValue>, int> _generationCacheMissedCallback;
 
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.
@@ -34,14 +37,21 @@ namespace Inivit.SuperCache
 		public Func<TKey, TValue> LoaderFunction { get; set; }
 
 		/// <summary>
-		/// Returns the number of items in the cache at the moment this property was invoked. It delegates
-		/// to the internal ConcurrentDictionary<TKey, TValue>.Count which acquires all internal locks.
-		/// As such, it causes contention and should be used sparingly.
+		/// Returns the number of items in the cache by enumerating them (non-locking).
 		/// </summary>
-		public int Count { get { return this._generationCache.Count; } }
+		public int Count { get { return this.Items.Count(); } }
+
+		public IEnumerable<KeyValuePair<TKey, TValue>> Items
+		{
+			get
+			{
+				return _generationCache
+				 .Where(x => x.Key.Item2 == _currentGeneration)
+				 .Select(x => new KeyValuePair<TKey, TValue>(x.Key.Item1, x.Value.CachedValue));
+			}
+		}
 
 		public SelfRefreshingCache(
-			string cacheName,
 			SelfRefreshingCacheOptions options,
 			Func<TKey, TValue> loaderFunction)
 		{
@@ -71,11 +81,18 @@ namespace Inivit.SuperCache
 			_refresherTimer.Start();
 		}
 
+		// Suppress warning of volatile not being treated as volatile
+		// http://msdn.microsoft.com/en-us/library/4bw5ewxy.aspx
+#pragma warning disable 420
+
 		private void RefreshCache(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
 				_refresherTimer.Stop();
+
+				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
 				int nextGeneration = _currentGeneration + 1;
 				if (nextGeneration == int.MaxValue)
 					// If this cache refreshes every 1 sec, and it's been running for 68.1 years, we'll have to loop back to start at zero again.
@@ -86,6 +103,7 @@ namespace Inivit.SuperCache
 					.Where(entry => entry.Key.Item2 == _currentGeneration)
 					// Start with the freshist entries.
 					.OrderByDescending(entry => entry.Value.TimeLoaded);
+
 				int itemCount = 0;
 				foreach (var entry in currentGenerationEntries)
 				{
@@ -93,7 +111,7 @@ namespace Inivit.SuperCache
 
 					if (++itemCount > _options.StandardCacheOptions.MaximumCacheSizeIndicator)
 						// Stop migrating entries to the next generation if we have reached the max.
-						return;
+						break;
 				}
 
 				// The next generation's cache entries have been loaded, so let's switch to it.
@@ -103,6 +121,15 @@ namespace Inivit.SuperCache
 				var previousGenerationEntries = _generationCache.Where(entry => entry.Key.Item2 == previousGeneration);
 				foreach (var oldEntry in previousGenerationEntries)
 					_generationCache.Invalidate(oldEntry.Key);
+
+				stopwatch.Stop();
+
+				if (this.RefreshCacheCallback != null)
+				{
+					var contexts = currentGenerationEntries.Select(x => x.Value.ClientContext).Distinct().ToList();
+					int elapsedMillisecondsPerContext = (int)stopwatch.ElapsedMilliseconds.SafeDivideBy(contexts.Count(), stopwatch.ElapsedMilliseconds);
+					contexts.ForEach(context => this.RefreshCacheCallback(_currentGeneration, elapsedMillisecondsPerContext, context));
+				}
 			}
 			finally
 			{
@@ -209,6 +236,14 @@ namespace Inivit.SuperCache
 				yield return entry;
 		}
 
+		public bool TryAdd(TKey key, TValue value)
+		{
+			var entry = new CacheEntry<TValue>();
+			entry.CachedValue = value;
+			entry.TimeLoaded = DateTime.Now;
+			return _generationCache.TryAdd(GenerationKey(key), value);
+		}
+
 		public void Dispose()
 		{
 			Dispose(true);
@@ -252,5 +287,62 @@ namespace Inivit.SuperCache
 		{
 			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
 		}
+
+		public Action<TKey, CacheEntry<TValue>> HitCallback
+		{
+			get
+			{
+				return _generationCacheHitCallback;
+			}
+			set
+			{
+				_generationCacheHitCallback = value;
+				if (_generationCacheHitCallback != null)
+				{
+					_generationCache.HitCallback = (genKey, cacheEntry) =>
+					{
+						_generationCacheHitCallback(genKey.Item1, cacheEntry);
+					};
+				}
+				else
+					_generationCache.HitCallback = null;
+			}
+		}
+
+		public Action<TKey, CacheEntry<TValue>, int> MissedCallback
+		{
+			get
+			{
+				return _generationCacheMissedCallback;
+			}
+			set
+			{
+				_generationCacheMissedCallback = value;
+				if (_generationCacheMissedCallback != null)
+				{
+					_generationCache.MissedCallback = (genKey, cacheEntry, durationMilliseconds) =>
+					{
+						_generationCacheMissedCallback(genKey.Item1, cacheEntry, durationMilliseconds);
+					};
+				}
+				else
+					_generationCache.MissedCallback = null;
+			}
+		}
+
+		public Action<long, long, string, long> FlushCallback
+		{
+			get
+			{
+				return _generationCache.FlushCallback;
+			}
+			set
+			{
+				_generationCache.FlushCallback = value;
+			}
+		}
+
+		public Action<int, int, string> RefreshCacheCallback { get; set; }
+
 	}
 }
