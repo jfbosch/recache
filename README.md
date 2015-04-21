@@ -1,4 +1,4 @@
-super-cache
+ReCache
 ===========
 
 There are lots of caching options out there, but if you need something really simple that you can get running within 5 minutes, without any external dependencies, this might just be for you.
