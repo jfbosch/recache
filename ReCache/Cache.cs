@@ -148,7 +148,11 @@ namespace ReCache
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
-					return LoadAndCacheEntry(key, loaderFunction).CachedValue;
+					var newEntry = LoadAndCacheEntry(key, loaderFunction);
+					if (!object.ReferenceEquals(newEntry.CachedValue, entry.CachedValue))
+						DisposeEntry(entry);
+
+					return newEntry.CachedValue;
 				}
 				else // Cached entry is still good.
 				{
@@ -256,13 +260,19 @@ namespace ReCache
 		public bool Invalidate(TKey key)
 		{
 			CacheEntry<TValue> tmp;
-			return _cachedEntries.TryRemove(key, out tmp);
+			bool removed = _cachedEntries.TryRemove(key, out tmp);
+			if (removed)
+				DisposeEntry(tmp);
+			return removed;
 		}
 
 		public void InvalidateAll()
 		{
 			// Clear() acquires all internal locks simultaneously, so will cause more contention.
-			_cachedEntries.Clear();
+			//_cachedEntries.Clear();
+
+			foreach (var pair in _cachedEntries)
+				Invalidate(pair.Key);
 		}
 
 		public bool HasKey(TKey key)
@@ -379,6 +389,18 @@ namespace ReCache
 				this._flushTimer.Stop();
 				this._flushTimer.Dispose();
 				this._flushTimer = null;
+			}
+		}
+
+		private void DisposeEntry(CacheEntry<TValue> entry)
+		{
+			if (_options.DisposeExpiredValuesIfDisposable)
+			{
+				if (entry.CachedValue is IDisposable)
+				{
+					var val = (IDisposable)entry.CachedValue;
+					val.Dispose();
+				}
 			}
 		}
 

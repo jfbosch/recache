@@ -42,11 +42,16 @@ namespace ReCache
 		public TimeSpan CacheItemExpiry { get; set; }
 
 		/// <summary>
+		/// If set to true, will check if the cached value implements IDisposable, and if so,
+		/// will call .Dispose() on values that are invalidated or flushed.  The default is true.
+		/// </summary>
+		public bool DisposeExpiredValuesIfDisposable { get; set; }
+
+		/// <summary>
 		/// The interval at which FlushInvalidatedEntries() will be invoked.
 		/// The default is every 10 seconds.
 		/// </summary>
 		public TimeSpan FlushInterval { get; set; }
-		public string AdditionalMetricNamespace { get; set; }
 
 		public CacheOptions()
 		{
