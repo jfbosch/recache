@@ -1,0 +1,1 @@
+nuget pack ReCache.csproj -Prop Configuration=Release
