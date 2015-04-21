@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	public class TupleComparer<TItem1, TItem2>
 		: IEqualityComparer<Tuple<TItem1, TItem2>>

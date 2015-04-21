@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	public class EnumerableStringComparer : IEqualityComparer<IEnumerable<string>>
 	{

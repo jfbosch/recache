@@ -4,10 +4,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Timers;
 using System.Threading.Tasks;
+using System.Timers;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	/* Read the following link and understand how ConcurrentDictionary works before modifying this class.
 	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/

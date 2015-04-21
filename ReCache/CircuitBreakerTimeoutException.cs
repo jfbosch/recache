@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	[Serializable]
 	public class CircuitBreakerTimeoutException : Exception

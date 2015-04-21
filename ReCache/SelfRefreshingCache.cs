@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Timers;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	/// <summary>
 	/// This cache will automatically refresh all existing entries on the specified

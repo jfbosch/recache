@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Inivit.SuperCache
+namespace ReCache
 {
 	public interface ISelfRefreshingCache<TKey, TValue> : ICache<TKey, TValue>
 	{

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inivit.SuperCache", "Inivit.SuperCache\Inivit.SuperCache.csproj", "{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCache", "ReCache\ReCache.csproj", "{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{D61D9B46-EE12-4DA4-9221-F2B17016C386}"
 EndProject

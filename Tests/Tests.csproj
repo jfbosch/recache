@@ -64,9 +64,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Inivit.SuperCache\Inivit.SuperCache.csproj">
+    <ProjectReference Include="..\ReCache\ReCache.csproj">
       <Project>{3494e13a-9068-4bd8-9e82-8063f9e2a3f2}</Project>
-      <Name>Inivit.SuperCache</Name>
+      <Name>ReCache</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
