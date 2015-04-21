@@ -13,8 +13,6 @@ namespace Tests
 	[TestClass]
 	public class MainTests
 	{
-		public const string TestCacheName = "CacheTestCache";
-
 		[TestInitialize()]
 		public void Initialize()
 		{
