@@ -6,9 +6,9 @@ namespace ReCache
 {
 	public interface IAsyncCache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
 	{
-		Task<TValue> GetAsync(TKey key);
+		TValue Get(TKey key);
 
-		Task<TValue> GetAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
+		TValue Get(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
 
 		Task<TValue> GetOrLoadAsync(TKey key);
 
