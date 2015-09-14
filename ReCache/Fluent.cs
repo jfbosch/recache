@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace ReCache
 {
@@ -30,7 +31,7 @@ namespace ReCache
 
 		public static CacheBuilder<TKey, TValue> LoaderFunction<TKey, TValue>(
 			this CacheBuilder<TKey, TValue> builder,
-			Func<TKey, TValue>  loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 		{
 			builder.LoaderFunc = loaderFunction;
 			return builder;

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace ReCache
@@ -19,14 +20,14 @@ namespace ReCache
 	/// </summary>
 	/// <typeparam name="TKey"></typeparam>
 	/// <typeparam name="TValue"></typeparam>
-	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingCache<TKey, TValue>
+	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingAsyncCache<TKey, TValue>
 	{
 		private volatile int _currentGeneration = 0;
 		private System.Timers.Timer _refresherTimer;
 		private readonly SelfRefreshingCacheOptions _options;
 
 		// The backing, generation cache, with the int part of the key being the generation of the cache entry.
-		private ICache<Tuple<TKey, int>, TValue> _generationCache;
+		private IAsyncCache<Tuple<TKey, int>, TValue> _generationCache;
 
 		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
 		private Action<TKey, CacheEntry<TValue>, int> _generationCacheMissedCallback;
@@ -34,7 +35,7 @@ namespace ReCache
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.
 		/// </summary>
-		public Func<TKey, TValue> LoaderFunction { get; set; }
+		public Func<TKey, Task<TValue>> LoaderFunction { get; set; }
 
 		/// <summary>
 		/// Returns the number of items in the cache by enumerating them (non-locking).
@@ -53,7 +54,7 @@ namespace ReCache
 
 		public SelfRefreshingCache(
 			SelfRefreshingCacheOptions options,
-			Func<TKey, TValue> loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 		{
 			if (options == null)
 				throw new ArgumentNullException("options");
@@ -66,7 +67,7 @@ namespace ReCache
 
 			this.LoaderFunction = loaderFunction;
 			// Wrap the incoming loader function into a function that can be passed to the generation cache.
-			Func<Tuple<TKey, int>, TValue> versionLoderFunction = (generationKey) =>
+			Func<Tuple<TKey, int>, Task<TValue>> versionLoderFunction = (generationKey) =>
 			{
 				return this.LoaderFunction(generationKey.Item1);
 			};
@@ -85,7 +86,7 @@ namespace ReCache
 		// http://msdn.microsoft.com/en-us/library/4bw5ewxy.aspx
 #pragma warning disable 420
 
-		private void RefreshCache(object sender, ElapsedEventArgs e)
+		private async void RefreshCache(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
@@ -107,7 +108,7 @@ namespace ReCache
 				int itemCount = 0;
 				foreach (var entry in currentGenerationEntries)
 				{
-					_generationCache.GetOrLoad(GenerationKey(entry.Key.Item1, nextGeneration));
+					await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration));
 
 					if (++itemCount > _options.StandardCacheOptions.MaximumCacheSizeIndicator)
 						// Stop migrating entries to the next generation if we have reached the max.
@@ -137,13 +138,13 @@ namespace ReCache
 			}
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key)
 		{
-			return GetOrLoad(key, false);
+			return await GetOrLoadAsync(key, false);
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
@@ -155,7 +156,7 @@ namespace ReCache
 				return val;
 
 			// Else fall back to standard behavior for GetOrLoad current generation
-			return this._generationCache.GetOrLoad(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
+			return await this._generationCache.GetOrLoadAsync(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
 		}
 
 		public TValue Get(TKey key)
@@ -278,12 +279,12 @@ namespace ReCache
 			}
 		}
 
-		public TValue GetOrLoad(TKey key, Func<TKey, TValue> loaderFunction)
+		public Task<TValue> GetOrLoadAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
 		}
 
-		public TValue GetOrLoad(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, TValue> loaderFunction)
+		public Task<TValue> GetOrLoadAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
 		}
