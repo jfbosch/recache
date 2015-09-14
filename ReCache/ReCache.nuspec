@@ -10,7 +10,7 @@
 		<projectUrl>https://github.com/jfbosch/recache</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
-		<releaseNotes>Fix bug in SelfRefreshingCache.Refresh related to MaximumCacheSizeIndicator.</releaseNotes>
+		<releaseNotes>Refactor to use .ConfigureAwait(false) on all Tasks.</releaseNotes>
 		<copyright>Copyright 2015</copyright>
 		<tags>Cache .net in-memory performance</tags>
 	</metadata>
