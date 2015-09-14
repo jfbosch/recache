@@ -13,7 +13,7 @@ namespace ReCache
 	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
 	 */
 
-	public class Cache<TKey, TValue> : ICache<TKey, TValue>
+	public class Cache<TKey, TValue> : IAsyncCache<TKey, TValue>
 	{
 		private ConcurrentDictionary<TKey, TKey> _keysBusyLoading;
 		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
@@ -23,7 +23,7 @@ namespace ReCache
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.
 		/// </summary>
-		public Func<TKey, TValue> LoaderFunction { get; set; }
+		public Func<TKey, Task<TValue>> LoaderFunction { get; set; }
 
 		/// <summary>
 		/// Returns the number of items in the cache by enumerating them (non-locking).
@@ -40,7 +40,7 @@ namespace ReCache
 
 		public Cache(
 			CacheOptions options,
-			Func<TKey, TValue> loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 		{
 			this.SetOptions(options);
 
@@ -60,7 +60,7 @@ namespace ReCache
 		public Cache(
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options,
-			Func<TKey, TValue> loaderFunction)
+			Func<TKey,  Task<TValue>> loaderFunction)
 			: this(options, loaderFunction)
 		{
 			if (comparer == null)
@@ -116,30 +116,30 @@ namespace ReCache
 			_options = options;
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key)
 		{
-			return GetOrLoad(key, false, this.LoaderFunction);
+			return await GetOrLoadAsync(key, false, this.LoaderFunction);
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
-			Func<TKey, TValue> loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 		{
-			return GetOrLoad(key, false, loaderFunction);
+			return await GetOrLoadAsync(key, false, loaderFunction);
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
-			return GetOrLoad(key, resetExpiryTimeoutIfAlreadyCached, this.LoaderFunction);
+			return await GetOrLoadAsync(key, resetExpiryTimeoutIfAlreadyCached, this.LoaderFunction);
 		}
 
-		public TValue GetOrLoad(
+		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached,
-			Func<TKey, TValue> loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 		{
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
@@ -148,7 +148,7 @@ namespace ReCache
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
-					var newEntry = LoadAndCacheEntry(key, loaderFunction);
+					var newEntry = await LoadAndCacheEntryAsync(key, loaderFunction);
 					if (!object.ReferenceEquals(newEntry.CachedValue, entry.CachedValue))
 						DisposeEntry(entry);
 
@@ -164,9 +164,9 @@ namespace ReCache
 					return entry.CachedValue;
 				}
 			}
-
+			 
 			// not in cache at all.
-			return LoadAndCacheEntry(key, loaderFunction).CachedValue;
+			return (await LoadAndCacheEntryAsync(key, loaderFunction)).CachedValue;
 		}
 
 		public TValue Get(TKey key)
@@ -174,7 +174,7 @@ namespace ReCache
 			return this.Get(key, false);
 		}
 
-		public TValue Get(
+		public  TValue Get(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
@@ -192,7 +192,7 @@ namespace ReCache
 				return default(TValue);
 		}
 
-		private CacheEntry<TValue> LoadAndCacheEntry(TKey key, Func<TKey, TValue> loaderFunction)
+		private async Task<CacheEntry<TValue>> LoadAndCacheEntryAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			if (loaderFunction == null)
 				throw new ArgumentNullException("loaderFunction");
@@ -206,7 +206,7 @@ namespace ReCache
 				try
 				{
 					entry = new CacheEntry<TValue>();
-					entry.CachedValue = loaderFunction(key);
+					entry.CachedValue =await loaderFunction(key);
 					entry.TimeLoaded = DateTime.Now;
 					_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 				}
