@@ -6,17 +6,17 @@ namespace ReCache
 {
 	public interface IAsyncCache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
 	{
-		TValue Get(TKey key);
+		Task<TValue> GetAsync(TKey key);
 
-		TValue Get(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
+		Task<TValue> GetAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
 
-		TValue GetOrLoad(TKey key);
+		Task<TValue> GetOrLoadAsync(TKey key);
 
-		TValue GetOrLoad(TKey key, Func<TKey, Task<TValue>> loaderFunction);
+		Task<TValue> GetOrLoadAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction);
 
-		TValue GetOrLoad(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
+		Task<TValue> GetOrLoadAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
 
-		TValue GetOrLoad(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction);
+		Task<TValue> GetOrLoadAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction);
 
 		bool HasKey(TKey key);
 
