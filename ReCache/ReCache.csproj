@@ -107,14 +107,12 @@
     <Compile Include="CacheBuilder.cs" />
     <Compile Include="IAsyncCache.cs" />
     <Compile Include="ISelfRefreshingAsyncCache.cs" />
-    <Compile Include="ISelfRefreshingCache.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="SelfRefreshingCacheOptions.cs" />
     <Compile Include="SelfRefreshingCache.cs" />
     <Compile Include="Cache.cs" />
     <Compile Include="CacheOptions.cs" />
     <Compile Include="CacheEntry.cs" />
-    <Compile Include="ICache.cs" />
     <Compile Include="TupleComparer.cs" />
     <Compile Include="EnumerableStringComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
