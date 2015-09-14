@@ -24,7 +24,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public virtual void TestStringAsKey()
+		public virtual async Task TestStringAsKey()
 		{
 			var _backendStore = new Dictionary<string, int>();
 			_backendStore.Add("", 0);
@@ -47,17 +47,18 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMinutes(1),
 					MaximumCacheSizeIndicator = 10000
 				},
-				loaderFunc);
+				loaderFunc)
+				as IAsyncCache<string, int>;
 
-			_cache.GetOrLoad("", false).Should().Be(0);
-			_cache.GetOrLoad("", false).Should().Be(0);
-			_cache.GetOrLoad("a", false).Should().Be(1);
-			_cache.GetOrLoad("a", false).Should().Be(1);
-			_cache.GetOrLoad("abc", false).Should().Be(3);
+			(await _cache.GetOrLoadAsync("", false)).Should().Be(0);
+			(await _cache.GetOrLoadAsync("", false)).Should().Be(0);
+			(await _cache.GetOrLoadAsync("a", false)).Should().Be(1);
+			(await _cache.GetOrLoadAsync("a", false)).Should().Be(1);
+			(await _cache.GetOrLoadAsync("abc", false)).Should().Be(3);
 		}
 
 		[TestMethod]
-		public virtual void TestEnumerableStringAsKeyAndThatLoaderFuncOnlyGetsHitOnce()
+		public virtual async Task TestEnumerableStringAsKeyAndThatLoaderFuncOnlyGetsHitOnce()
 		{
 			var _backendStore = new Dictionary<IEnumerable<string>, int>(new EnumerableStringComparer());
 			_backendStore.Add(Enumerable.Empty<string>(), 0);
@@ -81,17 +82,18 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMinutes(1),
 					MaximumCacheSizeIndicator = 10000
 				},
-				loaderFunc);
+				loaderFunc)
+				as IAsyncCache<IEnumerable<string>, int>;
 
-			_cache.GetOrLoad(Enumerable.Empty<string>(), false).Should().Be(0);
-			_cache.GetOrLoad(new string[] { }, false).Should().Be(0);
-			_cache.GetOrLoad(new string[] { "" }, false).Should().Be(1);
-			_cache.GetOrLoad(new string[] { "a" }, false).Should().Be(2);
-			_cache.GetOrLoad(new string[] { "a", "b" }, false).Should().Be(3);
+			(await _cache.GetOrLoadAsync(Enumerable.Empty<string>(), false)).Should().Be(0);
+			(await _cache.GetOrLoadAsync(new string[] { }, false)).Should().Be(0);
+			(await _cache.GetOrLoadAsync(new string[] { "" }, false)).Should().Be(1);
+			(await _cache.GetOrLoadAsync(new string[] { "a" }, false)).Should().Be(2);
+			(await _cache.GetOrLoadAsync(new string[] { "a", "b" }, false)).Should().Be(3);
 		}
 
 		[TestMethod]
-		public void StaleEntriesShouldBeAutoFlushed()
+		public async Task StaleEntriesShouldBeAutoFlushed()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -100,9 +102,10 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(100),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
-			Parallel.For(0, 1000, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 1000, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(1000);
 			Thread.Sleep(500);
 			_cache.Count.Should().Be(1000);
@@ -111,7 +114,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void EntriesShouldNotBeFlushedIfExtendWasUsed()
+		public async Task EntriesShouldNotBeFlushedIfExtendWasUsed()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -121,20 +124,21 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(50),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
-			Parallel.For(0, 100, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 100, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(100);
 			Thread.Sleep(100);
-			Parallel.For(0, 50, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 50, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(100);
 			Thread.Sleep(150);
-			Parallel.For(0, 50, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 50, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(50);
 		}
 
 		[TestMethod]
-		public void StaleEntriesShouldNotBeFlushedIfFlushIntervalIsNotReached()
+		public async Task StaleEntriesShouldNotBeFlushedIfFlushIntervalIsNotReached()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -143,10 +147,11 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(500),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
 			for (int i = 0; i < 100; i++)
-				_cache.GetOrLoad(i);
+				await _cache.GetOrLoadAsync(i);
 
 			_cache.Count.Should().Be(100);
 			Thread.Sleep(600);
@@ -154,7 +159,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldBlockOtherThreadsAndShareResult()
+		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldBlockOtherThreadsAndShareResult()
 		{
 			var random = new Random();
 			int numberOfLoaderCalls = 0;
@@ -199,7 +204,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout()
+		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout()
 		{
 			var random = new Random();
 			int numberOfLoaderCalls = 0;
@@ -254,7 +259,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void EntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
+		public async Task EntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
 		{
 			var cache = new Cache<int, string>(
 				new CacheOptions
@@ -274,7 +279,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void TestCacheFlushCallback()
+		public async Task TestCacheFlushCallback()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -283,7 +288,8 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(500),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
 			var flushCallbackRaised = 0;
 
@@ -298,7 +304,7 @@ namespace Tests
 				flushCallbackRaised++;
 			};
 
-			Parallel.For(0, 1000, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 1000, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(1000);
 			Thread.Sleep(500);
 			_cache.Count.Should().Be(1000);
@@ -308,7 +314,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
+		public async Task SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
@@ -321,10 +327,12 @@ namespace Tests
 						MaximumCacheSizeIndicator = 99
 					}
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as ISelfRefreshingAsyncCache<int, string>;
+
 
 			for (int i = 0; i < 200; i++)
-				_cache.GetOrLoad(i);
+				await _cache.GetOrLoadAsync(i);
 
 			_cache.Count.Should().Be(200);
 			Thread.Sleep(700);
@@ -332,7 +340,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void TryAddToCacheShouldIncreaseItemsInList()
+		public async Task TryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -341,9 +349,11 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(100),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
-			Parallel.For(0, 5, (i) => _cache.GetOrLoad(i));
+
+			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(5);
 
 			_cache.TryAdd(6, "6");
@@ -352,7 +362,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void ItemsPropertyShouldReturnListOfItemsInCache()
+		public async Task ItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new Cache<int, string>(
 				new CacheOptions
@@ -361,9 +371,10 @@ namespace Tests
 					FlushInterval = TimeSpan.FromMilliseconds(100),
 					MaximumCacheSizeIndicator = 1000
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as IAsyncCache<int, string>;
 
-			Parallel.For(0, 5, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(5);
 
 			_cache.Items.Should().NotBeNull();
@@ -376,7 +387,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void SelfRefreshingCacheEntriesTryAddToCacheShouldIncreaseItemsInList()
+		public async Task SelfRefreshingCacheEntriesTryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
@@ -389,9 +400,10 @@ namespace Tests
 						MaximumCacheSizeIndicator = 99
 					}
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as ISelfRefreshingAsyncCache<int, string>;
 
-			Parallel.For(0, 5, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 
 			_cache.Count.Should().Be(5);
 
@@ -401,7 +413,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void SelfRefreshingCacheItemsPropertyShouldReturnListOfItemsInCache()
+		public async Task SelfRefreshingCacheItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
@@ -414,9 +426,10 @@ namespace Tests
 						MaximumCacheSizeIndicator = 99
 					}
 				},
-				IntLoaderFunc);
+				IntLoaderFunc)
+				as ISelfRefreshingAsyncCache<int, string>;
 
-			Parallel.For(0, 5, (i) => _cache.GetOrLoad(i));
+			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(5);
 
 			_cache.Items.Should().NotBeNull();

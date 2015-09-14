@@ -63,7 +63,7 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public void Sample2WithFluentApi()
+		public async Task Sample2WithFluentApi()
 		{
 			// This func is to fetch the value from the data source. In this case it 
 			// is just a random generator, but this could be anything like a web service or database.
@@ -80,13 +80,14 @@ namespace Tests
 				.FlushInterval(TimeSpan.FromSeconds(5))
 				.MaximumCacheSizeIndicator (100)
 				.LoaderFunction(loaderFunction)
-				.Create();
+				.Create()
+				as IAsyncCache<int, string>;
 
 			// Record the first hit values for 100 keys
 			var firstHitValues = new List<string>();
 			for (int key = 0; key < 100; key++)
 			{
-				var value = cache.GetOrLoad(key);
+				var value = await cache.GetOrLoadAsync(key);
 				firstHitValues.Add(value);
 			}
 
@@ -95,7 +96,7 @@ namespace Tests
 			{
 				for (int key = 0; key < 100; key++)
 				{
-					var value = cache.GetOrLoad(key);
+					var value = await cache.GetOrLoadAsync(key);
 					Assert.AreEqual(firstHitValues[key], value);
 				}
 			}
@@ -106,7 +107,7 @@ namespace Tests
 			// Assert that the next hit returns fresh values. i.e. not equal to the first hit values. 
 			for (int key = 0; key < 100; key++)
 			{
-				var value = cache.GetOrLoad(key);
+				var value = await cache.GetOrLoadAsync(key);
 				Assert.AreNotEqual(firstHitValues[key], value);
 			}
 		}
