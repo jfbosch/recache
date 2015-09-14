@@ -60,7 +60,7 @@ namespace ReCache
 		public Cache(
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options,
-			Func<TKey,  Task<TValue>> loaderFunction)
+			Func<TKey, Task<TValue>> loaderFunction)
 			: this(options, loaderFunction)
 		{
 			if (comparer == null)
@@ -119,21 +119,21 @@ namespace ReCache
 		public async Task<TValue> GetOrLoadAsync(
 			TKey key)
 		{
-			return await GetOrLoadAsync(key, false, this.LoaderFunction);
+			return await GetOrLoadAsync(key, false, this.LoaderFunction).ConfigureAwait(false);
 		}
 
 		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
-			return await GetOrLoadAsync(key, false, loaderFunction);
+			return await GetOrLoadAsync(key, false, loaderFunction).ConfigureAwait(false);
 		}
 
 		public async Task<TValue> GetOrLoadAsync(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
-			return await GetOrLoadAsync(key, resetExpiryTimeoutIfAlreadyCached, this.LoaderFunction);
+			return await GetOrLoadAsync(key, resetExpiryTimeoutIfAlreadyCached, this.LoaderFunction).ConfigureAwait(false);
 		}
 
 		public async Task<TValue> GetOrLoadAsync(
@@ -148,7 +148,7 @@ namespace ReCache
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
-					var newEntry = await LoadAndCacheEntryAsync(key, loaderFunction);
+					var newEntry = await LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false);
 					if (!object.ReferenceEquals(newEntry.CachedValue, entry.CachedValue))
 						DisposeEntry(entry);
 
@@ -164,9 +164,9 @@ namespace ReCache
 					return entry.CachedValue;
 				}
 			}
-			 
+
 			// not in cache at all.
-			return (await LoadAndCacheEntryAsync(key, loaderFunction)).CachedValue;
+			return (await LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
 		}
 
 		public TValue Get(TKey key)
@@ -174,7 +174,7 @@ namespace ReCache
 			return this.Get(key, false);
 		}
 
-		public  TValue Get(
+		public TValue Get(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
@@ -206,7 +206,7 @@ namespace ReCache
 				try
 				{
 					entry = new CacheEntry<TValue>();
-					entry.CachedValue =await loaderFunction(key);
+					entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
 					entry.TimeLoaded = DateTime.Now;
 					_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 				}

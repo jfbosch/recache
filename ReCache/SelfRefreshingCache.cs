@@ -108,7 +108,7 @@ namespace ReCache
 				int itemCount = 0;
 				foreach (var entry in currentGenerationEntries)
 				{
-					await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration));
+					await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration)).ConfigureAwait(false);
 
 					itemCount++;
 					if (itemCount >= _options.StandardCacheOptions.MaximumCacheSizeIndicator)
@@ -142,7 +142,7 @@ namespace ReCache
 		public async Task<TValue> GetOrLoadAsync(
 			TKey key)
 		{
-			return await GetOrLoadAsync(key, false);
+			return await GetOrLoadAsync(key, false).ConfigureAwait(false);
 		}
 
 		public async Task<TValue> GetOrLoadAsync(
@@ -157,7 +157,7 @@ namespace ReCache
 				return val;
 
 			// Else fall back to standard behavior for GetOrLoad current generation
-			return await this._generationCache.GetOrLoadAsync(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
+			return await this._generationCache.GetOrLoadAsync(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached).ConfigureAwait(false);
 		}
 
 		public TValue Get(TKey key)
