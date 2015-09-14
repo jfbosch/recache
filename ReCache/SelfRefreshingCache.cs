@@ -20,14 +20,14 @@ namespace ReCache
 	/// </summary>
 	/// <typeparam name="TKey"></typeparam>
 	/// <typeparam name="TValue"></typeparam>
-	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingAsyncCache<TKey, TValue>
+	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingCache<TKey, TValue>
 	{
 		private volatile int _currentGeneration = 0;
 		private System.Timers.Timer _refresherTimer;
 		private readonly SelfRefreshingCacheOptions _options;
 
 		// The backing, generation cache, with the int part of the key being the generation of the cache entry.
-		private IAsyncCache<Tuple<TKey, int>, TValue> _generationCache;
+		private ICache<Tuple<TKey, int>, TValue> _generationCache;
 
 		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
 		private Action<TKey, CacheEntry<TValue>, int> _generationCacheMissedCallback;
@@ -110,7 +110,8 @@ namespace ReCache
 				{
 					await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration));
 
-					if (++itemCount > _options.StandardCacheOptions.MaximumCacheSizeIndicator)
+					itemCount++;
+					if (itemCount >= _options.StandardCacheOptions.MaximumCacheSizeIndicator)
 						// Stop migrating entries to the next generation if we have reached the max.
 						break;
 				}

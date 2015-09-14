@@ -13,7 +13,7 @@ namespace ReCache
 	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
 	 */
 
-	public class Cache<TKey, TValue> : IAsyncCache<TKey, TValue>
+	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
 		private ConcurrentDictionary<TKey, TKey> _keysBusyLoading;
 		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;

@@ -310,21 +310,20 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public async Task SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
+		public async Task SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedOnRefreshEvenIfNotStale()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
 				{
-					RefreshInterval = TimeSpan.FromMilliseconds(5),
+					RefreshInterval = TimeSpan.FromMilliseconds(600),
 					StandardCacheOptions = new CacheOptions
 					{
 						CacheItemExpiry = TimeSpan.FromMinutes(1),
-						FlushInterval = TimeSpan.FromMilliseconds(50),
+						FlushInterval = TimeSpan.FromMilliseconds(50000),
 						MaximumCacheSizeIndicator = 99
 					}
 				},
 				IntLoaderFunc);
-
 
 			for (int i = 0; i < 200; i++)
 				await _cache.GetOrLoadAsync(i);

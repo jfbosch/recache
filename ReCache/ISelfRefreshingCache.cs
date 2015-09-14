@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace ReCache
 {
-	public interface ISelfRefreshingAsyncCache<TKey, TValue> : IAsyncCache<TKey, TValue>
+	public interface ISelfRefreshingCache<TKey, TValue> : ICache<TKey, TValue>
 	{
 		/// <summary>
 		/// Parameters are:

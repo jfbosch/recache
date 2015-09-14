@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ReCache
 {
-	public interface IAsyncCache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
+	public interface ICache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
 	{
 		TValue Get(TKey key);
 
