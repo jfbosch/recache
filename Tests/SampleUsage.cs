@@ -20,7 +20,7 @@ namespace Tests
 			Func<int, Task<string>> loaderFunction = async (key) =>
 			{
 				int rnd = new Random().Next();
-				return string.Format("value{0}", rnd);
+				return await Task.FromResult(string.Format("value{0}", rnd));
 			};
 
 			var cacheOptions = new CacheOptions
@@ -72,7 +72,7 @@ namespace Tests
 			Func<int, Task<string>> loaderFunction = async (key) =>
 			{
 				int rnd = new Random().Next();
-				return string.Format("value{0}", rnd);
+				return await Task.FromResult(string.Format("value{0}", rnd));
 			};
 
 			var cache = CacheBuilder.Build<int, string>()

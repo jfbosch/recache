@@ -20,7 +20,7 @@ namespace Tests
 
 		protected async Task<string> IntLoaderFunc(int key)
 		{
-			return key.ToString();
+			return await Task.FromResult(key.ToString());
 		}
 
 		[TestMethod]
@@ -37,7 +37,7 @@ namespace Tests
 				var val = _backendStore[key];
 				// Remove it, so that an exception is thrown if the backend store gets accessed more than once.
 				_backendStore.Remove(key);
-				return val;
+				return await Task.FromResult(val);
 			};
 
 			var _cache = new Cache<string, int>(
@@ -70,7 +70,7 @@ namespace Tests
 				var val = _backendStore[key];
 				// Remove it, so that an exception is thrown if the backend store gets accessed more than once.
 				_backendStore.Remove(key);
-				return val;
+				return await Task.FromResult(val);
 			};
 
 			var _cache = new Cache<IEnumerable<string>, int>(
@@ -108,6 +108,7 @@ namespace Tests
 			_cache.Count.Should().Be(1000);
 			Thread.Sleep(700);
 			_cache.Count.Should().Be(0);
+			await Task.Yield();
 		}
 
 		[TestMethod]
@@ -123,13 +124,12 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-
 			Parallel.For(0, 100, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(100);
-			Thread.Sleep(100);
+			await Task.Delay(100);
 			Parallel.For(0, 50, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(100);
-			Thread.Sleep(150);
+			await Task.Delay(150);
 			Parallel.For(0, 50, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(50);
 		}
@@ -159,7 +159,7 @@ namespace Tests
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldBlockOtherThreadsAndShareResult()
 		{
 			var random = new Random();
-			int numberOfLoaderCalls = 0;
+			int numberOfLoaderCalls = await Task.FromResult(0);
 			var cache = new Cache<int, string>(
 				new CacheOptions
 				{
@@ -172,9 +172,8 @@ namespace Tests
 				{
 					Thread.Sleep(random.Next(50));
 					Interlocked.Increment(ref numberOfLoaderCalls);
-					return key.ToString();
+					return await Task.FromResult(key.ToString());
 				});
-
 
 			int testKey = 7;
 			string testValue = testKey.ToString();
@@ -188,7 +187,7 @@ namespace Tests
 					case 200:
 					case 300:
 					case 400:
-						// Fetch i as the key
+						// Fetch i as the key (we only ask for each of these keys once).
 						(await cache.GetOrLoadAsync(i)).Should().Be(i.ToString());
 						break;
 					default: // For all others, fetch the same test key.
@@ -204,7 +203,7 @@ namespace Tests
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout()
 		{
 			var random = new Random();
-			int numberOfLoaderCalls = 0;
+			int numberOfLoaderCalls = await Task.FromResult(0);
 
 			var cache = new Cache<int, string>(
 				new CacheOptions
@@ -218,9 +217,8 @@ namespace Tests
 				{
 					Thread.Sleep(random.Next(5, 50));
 					Interlocked.Increment(ref numberOfLoaderCalls);
-					return key.ToString();
+					return await Task.FromResult(key.ToString());
 				});
-
 
 			int numberOfCacheRequestsShortCircuited = 0;
 			int testKey = 7;
@@ -302,9 +300,9 @@ namespace Tests
 
 			Parallel.For(0, 1000, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(1000);
-			Thread.Sleep(500);
+			await Task.Delay(500);
 			_cache.Count.Should().Be(1000);
-			Thread.Sleep(1700);
+			await Task.Delay(1700);
 			_cache.Count.Should().Be(0);
 			flushCallbackRaised.Should().Be(4);
 		}
@@ -345,13 +343,13 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-
 			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(5);
 
 			_cache.TryAdd(6, "6");
 
 			_cache.Count.Should().Be(6);
+			await Task.Yield();
 		}
 
 		[TestMethod]
@@ -366,7 +364,6 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-
 			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 			_cache.Count.Should().Be(5);
 
@@ -377,6 +374,7 @@ namespace Tests
 
 			_cache.Items.Should().NotBeNull();
 			_cache.Items.Count().Should().Be(6);
+			await Task.Yield();
 		}
 
 		[TestMethod]
@@ -395,7 +393,6 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-
 			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
 
 			_cache.Count.Should().Be(5);
@@ -403,6 +400,7 @@ namespace Tests
 			_cache.TryAdd(6, "6");
 
 			_cache.Count.Should().Be(6);
+			await Task.Yield();
 		}
 
 		[TestMethod]
@@ -431,6 +429,9 @@ namespace Tests
 
 			_cache.Items.Should().NotBeNull();
 			_cache.Items.Count().Should().Be(6);
+			await Task.Yield();
 		}
+
+
 	}
 }
