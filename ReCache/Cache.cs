@@ -207,6 +207,7 @@ namespace ReCache
 				try
 				{
 					entry = new CacheEntry<TValue>();
+					//TODO: delete this line if decide not to go with timeout.
 					//entry.CachedValue = await loaderFunction(key).TimeoutAfter(_options.LoaderFuncTimeout).ConfigureAwait(false);
 					entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
 					entry.TimeLoaded = DateTime.Now;
