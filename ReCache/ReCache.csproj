@@ -104,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CircuitBreakerTimeoutException.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Fluent.cs" />
     <Compile Include="CacheBuilder.cs" />
     <Compile Include="ICache.cs" />

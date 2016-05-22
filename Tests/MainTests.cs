@@ -156,6 +156,50 @@ namespace Tests
 		}
 
 		[TestMethod]
+		public async Task ShouldTimeoutAndAbortFirstCallPerKey()
+		{
+			throw new NotImplementedException();
+			int numberOfLoaderCalls = await Task.FromResult(0);
+			var cache = new Cache<int, string>(
+				new CacheOptions
+				{
+					LoaderFuncTimeout = TimeSpan.FromMilliseconds(500),
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.MaxValue,
+					CacheItemExpiry = TimeSpan.FromMinutes(1),
+					FlushInterval = TimeSpan.FromMilliseconds(5000),
+					MaximumCacheSizeIndicator = 1000
+				},
+				async (key) =>
+				{
+					if (key == 1)
+						Thread.Sleep(50);
+					else
+						//Thread.Sleep(10000);
+						await Task.Delay(10000);
+
+					Interlocked.Increment(ref numberOfLoaderCalls);
+					return await Task.FromResult(key.ToString());
+				});
+
+			int exceptionCount = 0;
+			var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
+			Parallel.For(1, 3, options, async (i) =>
+			{
+				try
+				{
+					(await cache.GetOrLoadAsync(i)).Should().Be(i.ToString());
+				}
+				catch (Exception ex)
+				{
+					Interlocked.Increment(ref exceptionCount);
+				}
+			});
+
+			numberOfLoaderCalls.Should().Be(1, "loader func should only have completed once by the time the assertion is hit.");
+			exceptionCount.Should().Be(1, "the second loader func should time out.");
+		}
+
+		[TestMethod]
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldBlockOtherThreadsAndShareResult()
 		{
 			var random = new Random();

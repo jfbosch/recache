@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace ReCache
 {
@@ -22,7 +23,7 @@ namespace ReCache
 			{
 				// Map TimeSpan.MaxValue to -1 ms because that is what Task.WaitAll expects for infinite timeout.
 				if (value == TimeSpan.MaxValue)
-					_circuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(-1);
+					_circuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(Timeout.Infinite);
 				else
 					_circuitBreakerTimeoutForAdditionalThreadsPerKey = value;
 			}
@@ -53,13 +54,21 @@ namespace ReCache
 		/// </summary>
 		public TimeSpan FlushInterval { get; set; }
 
+		/// <summary>
+		/// The time after which a loader func that has not yet
+		/// been completed will be aborted. If the loader func is aborted,
+		/// an exception will be thrown.
+		/// </summary>
+		public TimeSpan LoaderFuncTimeout { get; set; }
+
 		public CacheOptions()
 		{
 			// Set some logical defaults.
-			this.CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(2000);
 			this.MaximumCacheSizeIndicator = 10000;
-			this.CacheItemExpiry = TimeSpan.FromMinutes(1);
-			this.FlushInterval = TimeSpan.FromSeconds(10);
+			this.CacheItemExpiry = TimeSpan.FromSeconds(60);
+			this.FlushInterval = TimeSpan.FromSeconds(120);
+			this.LoaderFuncTimeout = TimeSpan.FromSeconds(60);
+			this.CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(2000);
 		}
 	}
 }

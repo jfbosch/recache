@@ -148,7 +148,7 @@ namespace ReCache
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
-					var newEntry = await LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false);
+					var newEntry = await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false);
 					if (!object.ReferenceEquals(newEntry.CachedValue, entry.CachedValue))
 						DisposeEntry(entry);
 
@@ -161,12 +161,13 @@ namespace ReCache
 
 					if (this.HitCallback != null)
 						this.HitCallback(key, entry);
+
 					return entry.CachedValue;
 				}
 			}
 
 			// not in cache at all.
-			return (await LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
+			return (await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
 		}
 
 		public TValue Get(TKey key)
@@ -206,6 +207,7 @@ namespace ReCache
 				try
 				{
 					entry = new CacheEntry<TValue>();
+					//entry.CachedValue = await loaderFunction(key).TimeoutAfter(_options.LoaderFuncTimeout).ConfigureAwait(false);
 					entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
 					entry.TimeLoaded = DateTime.Now;
 					_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
