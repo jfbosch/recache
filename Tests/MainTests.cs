@@ -244,6 +244,13 @@ namespace Tests
 		}
 
 		[TestMethod]
+		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout_Loop()
+		{
+			for (int i = 0; i < 50; i++)
+				await CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout();
+		}
+
+		[TestMethod]
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout()
 		{
 			var random = new Random();
@@ -252,14 +259,14 @@ namespace Tests
 			var cache = new Cache<int, string>(
 				new CacheOptions
 				{
-					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.Zero,
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(5),
 					CacheItemExpiry = TimeSpan.FromMinutes(1),
 					FlushInterval = TimeSpan.FromMilliseconds(5000),
 					MaximumCacheSizeIndicator = 1000
 				},
 				async (key) =>
 				{
-					Thread.Sleep(random.Next(5, 50));
+					Thread.Sleep(random.Next(1, 50));
 					Interlocked.Increment(ref numberOfLoaderCalls);
 					return await Task.FromResult(key.ToString());
 				});

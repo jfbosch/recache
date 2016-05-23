@@ -15,7 +15,7 @@ namespace ReCache
 
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
-		private ConcurrentDictionary<TKey, TKey> _keysBusyLoading;
+		private ConcurrentDictionary<TKey, X> _keysBusyLoading;
 		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
 		private Timer _flushTimer;
@@ -45,7 +45,7 @@ namespace ReCache
 			this.SetOptions(options);
 
 			LoaderFunction = loaderFunction;
-			_keysBusyLoading = new ConcurrentDictionary<TKey, TKey>();
+			_keysBusyLoading = new ConcurrentDictionary<TKey, X>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>();
 			this.InitializeFlushTimer();
 		}
@@ -66,7 +66,7 @@ namespace ReCache
 			if (comparer == null)
 				throw new ArgumentNullException("comparer");
 
-			_keysBusyLoading = new ConcurrentDictionary<TKey, TKey>();
+			_keysBusyLoading = new ConcurrentDictionary<TKey, X>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>(comparer);
 			this.InitializeFlushTimer();
 		}
@@ -201,36 +201,30 @@ namespace ReCache
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 			CacheEntry<TValue> entry;
-			bool isNewKey = _keysBusyLoading.TryAdd(key, key);
-			if (isNewKey)
+			//bool isNewKey = _keysBusyLoading.TryAdd(key, new X());
+			//if (isNewKey)
+			X newX = new X();
+			X x = _keysBusyLoading.GetOrAdd(key, (k) => newX);
+			if (x == newX)
 			{
 				try
 				{
 					entry = new CacheEntry<TValue>();
-					//TODO: delete this line if decide not to go with timeout.
-					//entry.CachedValue = await loaderFunction(key).TimeoutAfter(_options.LoaderFuncTimeout).ConfigureAwait(false);
 					entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
 					entry.TimeLoaded = DateTime.Now;
 					_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 				}
 				finally
 				{
-					TKey throwaway;
-					_keysBusyLoading.TryRemove(key, out throwaway);
+					X outX;
+					if (_keysBusyLoading.TryRemove(key, out outX))
+					{
+					}
 				}
 			}
 			else // Key is already busy loading
 			{
-				// Wait for the key busy being cached to complete so that we can return it's value for this thread too. But stop waiting when the timeout is reached.
-				var cancellation = new System.Threading.CancellationTokenSource();
-				var pollingTask = PollForEntry(key, cancellation.Token);
-				if (Task.WaitAll(new Task[] { pollingTask }, _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey))
-					entry = pollingTask.Result;
-				else
-				{
-					cancellation.Cancel(false);
-					throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
-				}
+				entry = await JoinAlreadyLoadingKey(key).ConfigureAwait(false);
 			}
 
 			stopwatch.Stop();
@@ -241,23 +235,27 @@ namespace ReCache
 			return entry;
 		}
 
-		private Task<CacheEntry<TValue>> PollForEntry(TKey key, System.Threading.CancellationToken cancellationToken)
+		private async Task<CacheEntry<TValue>> JoinAlreadyLoadingKey(TKey key)
 		{
-			Func<CacheEntry<TValue>> poller = () =>
+			// Wait for the key busy being cached to complete so that we can return it's value for this thread too. But stop waiting when the timeout is reached.
+			double timeoutMs = _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds;
+			Stopwatch watch = Stopwatch.StartNew();
+			while (true)
 			{
-				while (true)
-				{
-					if (cancellationToken.IsCancellationRequested)
-						return null;
+				CacheEntry<TValue> e;
+				if (_cachedEntries.TryGetValue(key, out e))
+					return e;
+				else
+					await Task.Delay(10).ConfigureAwait(false);
 
-					CacheEntry<TValue> e;
-					if (_cachedEntries.TryGetValue(key, out e))
-						return e;
-					else
-						System.Threading.Thread.Sleep(1);
+				watch.Stop();
+				if (watch.ElapsedMilliseconds > timeoutMs)
+				{
+
+					throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
 				}
-			};
-			return Task.Run<CacheEntry<TValue>>(poller, cancellationToken);
+				watch.Start();
+			}
 		}
 
 		public bool Invalidate(TKey key)
