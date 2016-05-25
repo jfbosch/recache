@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReCache;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,6 +17,9 @@ namespace ReCache
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
+		private bool _isDisposed = false;
+		private readonly object _disposeLock = new object();
+
 		private readonly ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>> _executingKeys;
 		private readonly ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
@@ -374,19 +378,33 @@ namespace ReCache
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (disposing)
+			lock (this._disposeLock)
 			{
-				// free managed resources
-				this.InvalidateAll();
+				if (!_isDisposed)
+				{
+					if (disposing)
+					{
+						// free managed resources
+						this.InvalidateAll();
+
+						foreach (ExecutingKeyInfo<TKey> keyInfo in _executingKeys.Values.Select(ki => ki).ToList())
+						{
+							keyInfo.Dispose();
+							ExecutingKeyInfo<TKey> throwAway;
+							_executingKeys.TryRemove(keyInfo.Key, out throwAway);
+						}
+
+						if (this._flushTimer != null)
+						{
+							this._flushTimer.Stop();
+							this._flushTimer.Dispose();
+							this._flushTimer = null;
+						}
+					}
+				}
 			}
 
 			// free native resources if there are any.
-			if (this._flushTimer != null)
-			{
-				this._flushTimer.Stop();
-				this._flushTimer.Dispose();
-				this._flushTimer = null;
-			}
 		}
 
 		private void DisposeEntry(CacheEntry<TValue> entry)
