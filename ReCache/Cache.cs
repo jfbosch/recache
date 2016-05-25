@@ -15,7 +15,7 @@ namespace ReCache
 
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
-		private ConcurrentDictionary<TKey, X> _keysBusyLoading;
+		private ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>> _executingKeys;
 		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
 		private Timer _flushTimer;
@@ -45,7 +45,7 @@ namespace ReCache
 			this.SetOptions(options);
 
 			LoaderFunction = loaderFunction;
-			_keysBusyLoading = new ConcurrentDictionary<TKey, X>();
+			_executingKeys = new ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>();
 			this.InitializeFlushTimer();
 		}
@@ -66,7 +66,7 @@ namespace ReCache
 			if (comparer == null)
 				throw new ArgumentNullException("comparer");
 
-			_keysBusyLoading = new ConcurrentDictionary<TKey, X>();
+			_executingKeys = new ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>(comparer);
 			this.InitializeFlushTimer();
 		}
@@ -201,11 +201,10 @@ namespace ReCache
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 			CacheEntry<TValue> entry;
-			//bool isNewKey = _keysBusyLoading.TryAdd(key, new X());
-			//if (isNewKey)
-			X newX = new X();
-			X x = _keysBusyLoading.GetOrAdd(key, (k) => newX);
-			if (x == newX)
+			var newKeyInfo = new ExecutingKeyInfo<TKey>() { Key = key };
+			var keyInfo = _executingKeys.GetOrAdd(key, (k) => newKeyInfo);
+			bool isNewKey = (keyInfo != newKeyInfo);
+			if (isNewKey)
 			{
 				try
 				{
@@ -216,8 +215,8 @@ namespace ReCache
 				}
 				finally
 				{
-					X outX;
-					if (_keysBusyLoading.TryRemove(key, out outX))
+					ExecutingKeyInfo<TKey> outX;
+					if (_executingKeys.TryRemove(key, out outX))
 					{
 					}
 				}

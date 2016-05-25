@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace ReCache
 {
-	internal class X
+	internal class ExecutingKeyInfo<TKey>
 	{
+		public TKey Key { get; set; }
 	}
 }

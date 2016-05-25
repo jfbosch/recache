@@ -246,7 +246,7 @@ namespace Tests
 		[TestMethod]
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout_Loop()
 		{
-			for (int i = 0; i < 50; i++)
+			for (int i = 0; i < 500; i++)
 				await CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout();
 		}
 
@@ -259,14 +259,15 @@ namespace Tests
 			var cache = new Cache<int, string>(
 				new CacheOptions
 				{
-					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(5),
-					CacheItemExpiry = TimeSpan.FromMinutes(1),
-					FlushInterval = TimeSpan.FromMilliseconds(5000),
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.Zero,
+					CacheItemExpiry = TimeSpan.FromSeconds(60),
+					FlushInterval = TimeSpan.FromSeconds(5),
 					MaximumCacheSizeIndicator = 1000
 				},
 				async (key) =>
 				{
 					Thread.Sleep(random.Next(1, 50));
+					//await Task.Delay(random.Next(1, 50));
 					Interlocked.Increment(ref numberOfLoaderCalls);
 					return await Task.FromResult(key.ToString());
 				});
@@ -301,7 +302,7 @@ namespace Tests
 			});
 
 			numberOfLoaderCalls.Should().Be(5, "1 for each of the hundreds (100 to 400), and 1 for the test key");
-			numberOfCacheRequestsShortCircuited.Should().BeGreaterThan(5, "At least some should be too fast (i.e. hit while the key's value is still busy caching), and because the timeout is set to zero, it should fail");
+			numberOfCacheRequestsShortCircuited.Should().BeGreaterThan(5, "At least some should be too fast (i.e. hit while the key's value is still busy caching), and because the timeout is set very short, it should fail");
 		}
 
 		[TestMethod]
