@@ -13,10 +13,11 @@ namespace ReCache
 	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
 	 */
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
-		private ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>> _executingKeys;
-		private ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
+		private readonly ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>> _executingKeys;
+		private readonly ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
 		private Timer _flushTimer;
 
@@ -64,7 +65,7 @@ namespace ReCache
 			: this(options, loaderFunction)
 		{
 			if (comparer == null)
-				throw new ArgumentNullException("comparer");
+				throw new ArgumentNullException(nameof(comparer));
 
 			_executingKeys = new ConcurrentDictionary<TKey, ExecutingKeyInfo<TKey>>();
 			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>(comparer);
@@ -82,10 +83,6 @@ namespace ReCache
 					try
 					{
 						this.FlushInvalidatedEntries();
-					}
-					catch (Exception)
-					{
-						throw;
 					}
 					finally
 					{
@@ -106,7 +103,7 @@ namespace ReCache
 		private void SetOptions(CacheOptions options)
 		{
 			if (options == null)
-				throw new ArgumentNullException("options");
+				throw new ArgumentNullException(nameof(options));
 			if (options.MaximumCacheSizeIndicator < 1)
 				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1.");
 			if (options.CacheItemExpiry.TotalMilliseconds < 10)
@@ -170,12 +167,12 @@ namespace ReCache
 			return (await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
 		}
 
-		public TValue Get(TKey key)
+		public TValue GetEntry(TKey key)
 		{
-			return this.Get(key, false);
+			return this.GetEntry(key, false);
 		}
 
-		public TValue Get(
+		public TValue GetEntry(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
@@ -196,12 +193,12 @@ namespace ReCache
 		private async Task<CacheEntry<TValue>> LoadAndCacheEntryAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			if (loaderFunction == null)
-				throw new ArgumentNullException("loaderFunction");
+				throw new ArgumentNullException(nameof(loaderFunction));
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 			CacheEntry<TValue> entry;
-			var newKeyInfo = new ExecutingKeyInfo<TKey>() { Key = key };
+			var newKeyInfo = new ExecutingKeyInfo<TKey>(key);
 			var keyInfo = _executingKeys.GetOrAdd(key, (k) => newKeyInfo);
 			bool isNewKey = (keyInfo != newKeyInfo);
 			if (isNewKey)

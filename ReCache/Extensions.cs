@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace ReCache
 {
@@ -37,8 +38,8 @@ namespace ReCache
 			params object[] args)
 		{
 			if (value == null)
-				throw new ArgumentNullException("value");
-			return string.Format(value, args);
+				throw new ArgumentNullException(nameof(value));
+			return string.Format(CultureInfo.InvariantCulture, value, args);
 		}
 
 	}

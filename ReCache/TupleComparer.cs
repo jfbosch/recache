@@ -21,11 +21,13 @@ namespace ReCache
 			_item2Comparer = item2Comparer;
 		}
 
-		public bool DefaultCompareEquals<T>(T x, T y)
+		public bool DefaultCompareEquals<T>(T first, T second)
 		{
-			return EqualityComparer<T>.Default.Equals(x, y);
+			return EqualityComparer<T>.Default.Equals(first, second);
 		}
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1")]
 		public bool Equals(Tuple<TItem1, TItem2> x, Tuple<TItem1, TItem2> y)
 		{
 			if (ReferenceEquals(null, x) ^ ReferenceEquals(null, y))

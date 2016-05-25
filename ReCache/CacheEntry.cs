@@ -11,6 +11,6 @@ namespace ReCache
 		/// <summary>
 		/// An arbitrary context (meta data) for use by the client of the cache.
 		/// </summary>
-		public volatile string ClientContext;
+		public string ClientContext;
 	}
 }

@@ -40,6 +40,9 @@ namespace ReCache
 		public static Cache<TKey, TValue> Create<TKey, TValue>(
 			this CacheBuilder<TKey, TValue> builder)
 		{
+			if (builder == null)
+				throw new ArgumentNullException(nameof(builder));
+
 			var cache = new Cache<TKey, TValue>(builder.CacheOptions);
 			cache.LoaderFunction = builder.LoaderFunc;
 			return cache;

@@ -20,6 +20,7 @@ namespace ReCache
 	/// </summary>
 	/// <typeparam name="TKey"></typeparam>
 	/// <typeparam name="TValue"></typeparam>
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class SelfRefreshingCache<TKey, TValue> : ISelfRefreshingCache<TKey, TValue>
 	{
 		private volatile int _currentGeneration = 0;
@@ -52,16 +53,17 @@ namespace ReCache
 			}
 		}
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 		public SelfRefreshingCache(
 			SelfRefreshingCacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
 			if (options == null)
-				throw new ArgumentNullException("options");
+				throw new ArgumentNullException(nameof(options));
 			if ((options.RefreshInterval.TotalMilliseconds / options.StandardCacheOptions.CacheItemExpiry.TotalMilliseconds * 100) > 50)
 				throw new ArgumentException("The RefreshInterval may at most be 50% of the length of the CacheItemExpiry to allow for ample reload time, else the cache will experience unnecessary, possibly concurrent, misses. Either decrease the refresh interval, or increase the expiry timeout.");
 			if (loaderFunction == null)
-				throw new ArgumentNullException("loaderFunction");
+				throw new ArgumentNullException(nameof(loaderFunction));
 
 			_options = options;
 
@@ -151,7 +153,7 @@ namespace ReCache
 		{
 			// If the next generation for this key is already loaded, we can go ahead and return it.
 			var nextGenKey = GenerationKey(key, _currentGeneration + 1);
-			var val = _generationCache.Get(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
+			var val = _generationCache.GetEntry(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
 			// We include the HasKey check here because if TValue is a primative type, the != null check will always return true, even if there was no cache entry.
 			if (val != null && _generationCache.HasKey(nextGenKey))
 				return val;
@@ -160,24 +162,24 @@ namespace ReCache
 			return await this._generationCache.GetOrLoadAsync(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached).ConfigureAwait(false);
 		}
 
-		public TValue Get(TKey key)
+		public TValue GetEntry(TKey key)
 		{
-			return this.Get(key, false);
+			return this.GetEntry(key, false);
 		}
 
-		public TValue Get(
+		public TValue GetEntry(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
 			// If the next generation for this key is already loaded, we can go ahead and return it.
 			var nextGenKey = GenerationKey(key, _currentGeneration + 1);
-			var val = _generationCache.Get(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
+			var val = _generationCache.GetEntry(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
 			// We include the HasKey check here because if TValue is a primative type, the != null check will always return true, even if there was no cache entry.
 			if (val != null && _generationCache.HasKey(nextGenKey))
 				return val;
 
 			// Else fall back to standard behavior for Get current generation
-			return this._generationCache.Get(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
+			return this._generationCache.GetEntry(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
 		}
 
 		public bool Invalidate(TKey key)
@@ -211,7 +213,7 @@ namespace ReCache
 		/// <param name="key"></param>
 		/// <param name="generation"></param>
 		/// <returns></returns>
-		private Tuple<TKey, int> GenerationKey(TKey key, int generation)
+		private static Tuple<TKey, int> GenerationKey(TKey key, int generation)
 		{
 			var generationKey = new Tuple<TKey, int>(key, generation);
 			return generationKey;
@@ -246,15 +248,16 @@ namespace ReCache
 			return _generationCache.TryAdd(GenerationKey(key), value);
 		}
 
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
 
 		~SelfRefreshingCache()
 		{
 			Dispose(false);
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 
 		protected virtual void Dispose(bool disposing)
@@ -280,6 +283,7 @@ namespace ReCache
 			}
 		}
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "SelfRefreshingCache")]
 		public Task<TValue> GetOrLoadAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
