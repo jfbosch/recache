@@ -142,11 +142,14 @@ namespace ReCache
 			bool resetExpiryTimeoutIfAlreadyCached,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
+			TValue v;
+			if (this.TryGet(key, resetExpiryTimeoutIfAlreadyCached, out v))
+				return v;
+
 			var keyGate = this.GetKeyGate(key);
 			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
 			if (!gotKeyLockBeforeTimeout)
 			{
-				//TODO: improve
 				throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
 			}
 			else // Got the key gate lock.
@@ -154,10 +157,6 @@ namespace ReCache
 				try
 				{
 					return await GetIfCachedAndNotExpiredElseLoad(key, resetExpiryTimeoutIfAlreadyCached, loaderFunction);
-				}
-				catch (Exception)
-				{
-					throw;
 				}
 				finally
 				{
@@ -210,6 +209,14 @@ namespace ReCache
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
+				//TODO: make faster.
+				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				if (entry.TimeLoaded < someTimeAgo)
+				{
+					// Expired
+					return default(TValue);
+				}
+
 				if (this.HitCallback != null)
 					this.HitCallback(key, entry);
 
@@ -219,6 +226,39 @@ namespace ReCache
 			}
 			else // not in cache at all.
 				return default(TValue);
+		}
+
+		public bool TryGet(
+			TKey key,
+			bool resetExpiryTimeoutIfAlreadyCached,
+			out TValue value)
+		{
+			CacheEntry<TValue> entry;
+			if (_cachedEntries.TryGetValue(key, out entry))
+			{
+				//TODO: make faster.
+				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				if (entry.TimeLoaded < someTimeAgo)
+				{
+					// Expired
+					value = default(TValue);
+					return false;
+				}
+
+				if (this.HitCallback != null)
+					this.HitCallback(key, entry);
+
+				if (resetExpiryTimeoutIfAlreadyCached)
+					entry.TimeLoaded = DateTime.Now;
+
+				value = entry.CachedValue;
+				return true;
+			}
+			else // not in cache at all.
+			{
+				value = default(TValue);
+				return false;
+			}
 		}
 
 		private async Task<CacheEntry<TValue>> LoadAndCacheEntryAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
