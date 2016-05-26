@@ -229,7 +229,12 @@ namespace ReCache
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 			CacheEntry<TValue> entry = new CacheEntry<TValue>();
-			entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
+
+			//HACK: execute sync to prevent deadlock.
+			await Task.FromResult(0);
+			entry.CachedValue = loaderFunction(key).Result;
+			//entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
+
 			entry.TimeLoaded = DateTime.Now;
 			_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 

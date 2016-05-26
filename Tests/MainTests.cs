@@ -248,7 +248,7 @@ namespace Tests
 		[TestMethod]
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout_Loop()
 		{
-			for (int i = 0; i < 500; i++)
+			for (int i = 0; i < 150; i++)
 				await CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout();
 		}
 
@@ -262,9 +262,10 @@ namespace Tests
 
 		private static async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout(Random random, TimeSpan timeout)
 		{
+			int numberOfLoaderCallInitiations = await Task.FromResult(0);
 			int numberOfLoaderCalls = await Task.FromResult(0);
 
-			var cache = new Cache<int, string>(
+			using (var cache = new Cache<int, string>(
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = timeout,
@@ -274,43 +275,50 @@ namespace Tests
 				},
 				async (key) =>
 				{
-					Thread.Sleep(random.Next(1, 50));
-					//await Task.Delay(random.Next(1, 50));
+					Interlocked.Increment(ref numberOfLoaderCallInitiations);
+					//Thread.Sleep(random.Next(30, 50));
+					await Task.Delay(random.Next(30, 50)).ConfigureAwait(false);
 					Interlocked.Increment(ref numberOfLoaderCalls);
-					return await Task.FromResult(key.ToString());
+					return await Task.FromResult(key.ToString()).ConfigureAwait(false);
+				}))
+			{
+				int numberOfCacheRequestsShortCircuited = 0;
+				int testKey = 7;
+				string testValue = testKey.ToString();
+
+				var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
+				Parallel.For(0, 500, options, async (i) =>
+				{
+					try
+					{
+						switch (i)
+						{
+							case 100:
+							case 200:
+							case 300:
+							case 400:
+								// Fetch i as the key
+								var v = await cache.GetOrLoadAsync(i).ConfigureAwait(false);
+								v.Should().Be(i.ToString());
+								break;
+							default: // For all others, fetch the same test key.
+								var v2 = await cache.GetOrLoadAsync(testKey).ConfigureAwait(false);
+								v2.Should().Be(testKey.ToString());
+								break;
+						}
+					}
+					catch (CircuitBreakerTimeoutException)
+					{
+						Interlocked.Increment(ref numberOfCacheRequestsShortCircuited);
+					}
 				});
 
-			int numberOfCacheRequestsShortCircuited = 0;
-			int testKey = 7;
-			string testValue = testKey.ToString();
-
-			var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
-			Parallel.For(0, 500, options, async (i) =>
-			{
-				try
-				{
-					switch (i)
-					{
-						case 100:
-						case 200:
-						case 300:
-						case 400:
-							// Fetch i as the key
-							(await cache.GetOrLoadAsync(i)).Should().Be(i.ToString());
-							break;
-						default: // For all others, fetch the same test key.
-							(await cache.GetOrLoadAsync(testKey)).Should().Be(testValue);
-							break;
-					}
-				}
-				catch (CircuitBreakerTimeoutException)
-				{
-					Interlocked.Increment(ref numberOfCacheRequestsShortCircuited);
-				}
-			});
-
-			numberOfLoaderCalls.Should().Be(5, "1 for each of the hundreds (100 to 400), and 1 for the test key");
-			numberOfCacheRequestsShortCircuited.Should().BeGreaterThan(5, "At least some should be too fast (i.e. hit while the key's value is still busy caching), and because the timeout is set very short, it should fail");
+				int num = 5;
+				//numberOfCacheRequestsShortCircuited.Should().Be(0, "should not circuit break");
+				numberOfLoaderCallInitiations.Should().Be(num, "1 initiation for each of the hundreds (100 to 400), and 1 for the test key");
+				numberOfLoaderCalls.Should().Be(num, "1 for each of the hundreds (100 to 400), and 1 for the test key");
+				numberOfCacheRequestsShortCircuited.Should().BeGreaterThan(4, "At least some should be too fast (i.e. hit while the key's value is still busy caching), and because the timeout is set very short, it should fail");
+			}
 		}
 
 		[TestMethod]
