@@ -142,9 +142,36 @@ namespace ReCache
 			bool resetExpiryTimeoutIfAlreadyCached,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
+			var keyGate = this.GetKeyGate(key);
+			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
+			if (!gotKeyLockBeforeTimeout)
+			{
+				//TODO: improve
+				throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
+			}
+			else // Got the key gate lock.
+			{
+				try
+				{
+					return await GetIfCachedAndNotExpiredElseLoad(key, resetExpiryTimeoutIfAlreadyCached, loaderFunction);
+				}
+				catch (Exception)
+				{
+					throw;
+				}
+				finally
+				{
+					keyGate.Lock.Release();
+				}
+			}
+		}
+
+		private async Task<TValue> GetIfCachedAndNotExpiredElseLoad(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction)
+		{
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
+				//TODO: make faster.
 				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
 				{
@@ -171,12 +198,12 @@ namespace ReCache
 			return (await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
 		}
 
-		public TValue GetEntry(TKey key)
+		public TValue Get(TKey key)
 		{
-			return this.GetEntry(key, false);
+			return this.Get(key, false);
 		}
 
-		public TValue GetEntry(
+		public TValue Get(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
@@ -201,37 +228,10 @@ namespace ReCache
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-			CacheEntry<TValue> entry;
-			var keyGate = this.GetKeyGate(key);
-
-			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
-			if (!gotKeyLockBeforeTimeout)
-			{
-				//TODO: improve
-				throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
-			}
-			else // got key lock.
-			{
-				if (_cachedEntries.TryGetValue(key, out entry))
-				{
-					keyGate.Lock.Release();
-					return entry;
-				}
-				else // entry is still not cached.
-				{
-					try
-					{
-						entry = new CacheEntry<TValue>();
-						entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
-						entry.TimeLoaded = DateTime.Now;
-						_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
-					}
-					finally
-					{
-						keyGate.Lock.Release();
-					}
-				}
-			}
+			CacheEntry<TValue> entry = new CacheEntry<TValue>();
+			entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
+			entry.TimeLoaded = DateTime.Now;
+			_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 
 			stopwatch.Stop();
 
@@ -243,6 +243,7 @@ namespace ReCache
 
 		private KeyGate<TKey> GetKeyGate(TKey key)
 		{
+			//TODO: make lazy.
 			var tempKeyGate = new KeyGate<TKey>(key);
 			var keyGate = _keyGates.GetOrAdd(key, (k) => tempKeyGate);
 			if (tempKeyGate != keyGate)

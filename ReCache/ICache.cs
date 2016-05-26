@@ -7,9 +7,9 @@ namespace ReCache
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public interface ICache<TKey, TValue> : IEnumerable<KeyValuePair<TKey, CacheEntry<TValue>>>, IDisposable
 	{
-		TValue GetEntry(TKey key);
+		TValue Get(TKey key);
 
-		TValue GetEntry(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
+		TValue Get(TKey key, bool resetExpiryTimeoutIfAlreadyCached);
 
 		Task<TValue> GetOrLoadAsync(TKey key);
 

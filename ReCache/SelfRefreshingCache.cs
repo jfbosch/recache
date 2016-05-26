@@ -153,7 +153,7 @@ namespace ReCache
 		{
 			// If the next generation for this key is already loaded, we can go ahead and return it.
 			var nextGenKey = GenerationKey(key, _currentGeneration + 1);
-			var val = _generationCache.GetEntry(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
+			var val = _generationCache.Get(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
 			// We include the HasKey check here because if TValue is a primative type, the != null check will always return true, even if there was no cache entry.
 			if (val != null && _generationCache.HasKey(nextGenKey))
 				return val;
@@ -162,24 +162,24 @@ namespace ReCache
 			return await this._generationCache.GetOrLoadAsync(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached).ConfigureAwait(false);
 		}
 
-		public TValue GetEntry(TKey key)
+		public TValue Get(TKey key)
 		{
-			return this.GetEntry(key, false);
+			return this.Get(key, false);
 		}
 
-		public TValue GetEntry(
+		public TValue Get(
 			TKey key,
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
 			// If the next generation for this key is already loaded, we can go ahead and return it.
 			var nextGenKey = GenerationKey(key, _currentGeneration + 1);
-			var val = _generationCache.GetEntry(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
+			var val = _generationCache.Get(nextGenKey, resetExpiryTimeoutIfAlreadyCached);
 			// We include the HasKey check here because if TValue is a primative type, the != null check will always return true, even if there was no cache entry.
 			if (val != null && _generationCache.HasKey(nextGenKey))
 				return val;
 
 			// Else fall back to standard behavior for Get current generation
-			return this._generationCache.GetEntry(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
+			return this._generationCache.Get(GenerationKey(key), resetExpiryTimeoutIfAlreadyCached);
 		}
 
 		public bool Invalidate(TKey key)

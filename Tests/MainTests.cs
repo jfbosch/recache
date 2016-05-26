@@ -256,13 +256,19 @@ namespace Tests
 		public async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout()
 		{
 			var random = new Random();
+			await CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout(random, TimeSpan.Zero);
+			await CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout(random, TimeSpan.FromMilliseconds(5));
+		}
+
+		private static async Task CircuitBreakerShouldOnlyPassThroughFirstThreadRequestAndShouldThrowForOtherThreadsAfterTimeout(Random random, TimeSpan timeout)
+		{
 			int numberOfLoaderCalls = await Task.FromResult(0);
 
 			var cache = new Cache<int, string>(
 				new CacheOptions
 				{
-					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.Zero,
-					CacheItemExpiry = TimeSpan.FromSeconds(60),
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = timeout,
+					CacheItemExpiry = TimeSpan.FromSeconds(120),
 					FlushInterval = TimeSpan.FromSeconds(5),
 					MaximumCacheSizeIndicator = 1000
 				},
