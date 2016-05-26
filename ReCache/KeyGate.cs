@@ -7,21 +7,21 @@ using System.Threading.Tasks;
 
 namespace ReCache
 {
-	internal sealed class ExecutingKeyInfo<TKey> : IDisposable
+	internal sealed class KeyGate<TKey> : IDisposable
 	{
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
 
 		internal TKey Key { get; private set; }
-		internal SemaphoreSlim Gate { get; private set; }
+		internal SemaphoreSlim Lock { get; private set; }
 
-		internal ExecutingKeyInfo(TKey key)
+		internal KeyGate(TKey key)
 		{
 			if (ReferenceEquals(null, key))
 				throw new ArgumentNullException(nameof(key));
 
 			this.Key = key;
-			this.Gate = new SemaphoreSlim(1, 1);
+			this.Lock = new SemaphoreSlim(1, 1);
 		}
 
 		public void Dispose()
@@ -30,7 +30,7 @@ namespace ReCache
 			{
 				if (!_isDisposed)
 				{
-					this.Gate.Dispose();
+					this.Lock.Dispose();
 					GC.SuppressFinalize(this);
 					_isDisposed = true;
 				}

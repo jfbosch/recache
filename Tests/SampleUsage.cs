@@ -32,7 +32,6 @@ namespace Tests
 			var cache = new Cache<int, string>(
 				cacheOptions, loaderFunction);
 
-
 			// Record the first hit values for 100 keys
 			var firstHitValues = new List<string>();
 			for (int key = 0; key < 100; key++)

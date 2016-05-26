@@ -155,7 +155,7 @@ namespace Tests
 			_cache.Count.Should().Be(0);
 		}
 
-		[TestMethod]
+		//[TestMethod]
 		public async Task ShouldTimeoutAndAbortFirstCallPerKey()
 		{
 			//TODO: do we need this test?

@@ -78,7 +78,7 @@
     <Compile Include="TupleComparer.cs" />
     <Compile Include="EnumerableStringComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ExecutingKeyInfo.cs" />
+    <Compile Include="KeyGate.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReCache.nuspec" />
