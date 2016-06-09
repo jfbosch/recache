@@ -11,9 +11,8 @@
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
 		<releaseNotes>
-Improved Circuit Breaker implementation so that if the first key load fails, the following load that has not yet circuit broken will enter the load. 
-Improved synchronisation using SemaphoreSlim.
-Small performance improvements.
+Remove unneeded hack that sometimes caused deadlocks.
+Switch from DateTime.Now to DateTime.UtcNow for faster performance when tracking expired entries.
 		</releaseNotes>
 		<copyright>Copyright 2015</copyright>
 		<tags>Cache .net in-memory performance</tags>

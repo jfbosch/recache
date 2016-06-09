@@ -244,10 +244,9 @@ namespace ReCache
 		{
 			var entry = new CacheEntry<TValue>();
 			entry.CachedValue = value;
-			entry.TimeLoaded = DateTime.Now;
+			entry.TimeLoaded = DateTime.UtcNow;
 			return _generationCache.TryAdd(GenerationKey(key), value);
 		}
-
 
 		~SelfRefreshingCache()
 		{

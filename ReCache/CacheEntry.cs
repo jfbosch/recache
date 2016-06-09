@@ -5,7 +5,6 @@ namespace ReCache
 	public class CacheEntry<TValue>
 	{
 		internal TValue CachedValue { get; set; }
-
 		internal DateTime TimeLoaded { get; set; }
 
 		/// <summary>

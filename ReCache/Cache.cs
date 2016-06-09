@@ -1,5 +1,4 @@
-﻿using ReCache;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -170,8 +169,7 @@ namespace ReCache
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
-				//TODO: make faster.
-				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
@@ -184,7 +182,7 @@ namespace ReCache
 				else // Cached entry is still good.
 				{
 					if (resetExpiryTimeoutIfAlreadyCached)
-						entry.TimeLoaded = DateTime.Now;
+						entry.TimeLoaded = DateTime.UtcNow;
 
 					if (this.HitCallback != null)
 						this.HitCallback(key, entry);
@@ -209,8 +207,7 @@ namespace ReCache
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
-				//TODO: make faster.
-				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Expired
@@ -221,7 +218,7 @@ namespace ReCache
 					this.HitCallback(key, entry);
 
 				if (resetExpiryTimeoutIfAlreadyCached)
-					entry.TimeLoaded = DateTime.Now;
+					entry.TimeLoaded = DateTime.UtcNow; ;
 				return entry.CachedValue;
 			}
 			else // not in cache at all.
@@ -236,8 +233,7 @@ namespace ReCache
 			CacheEntry<TValue> entry;
 			if (_cachedEntries.TryGetValue(key, out entry))
 			{
-				//TODO: make faster.
-				var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Expired
@@ -249,7 +245,7 @@ namespace ReCache
 					this.HitCallback(key, entry);
 
 				if (resetExpiryTimeoutIfAlreadyCached)
-					entry.TimeLoaded = DateTime.Now;
+					entry.TimeLoaded = DateTime.UtcNow; ;
 
 				value = entry.CachedValue;
 				return true;
@@ -270,7 +266,7 @@ namespace ReCache
 
 			CacheEntry<TValue> entry = new CacheEntry<TValue>();
 			entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
-			entry.TimeLoaded = DateTime.Now;
+			entry.TimeLoaded = DateTime.UtcNow; ;
 			_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
 			stopwatch.Stop();
 
@@ -322,7 +318,7 @@ namespace ReCache
 			stopwatch.Start();
 
 			// Firsh flush stale entries.
-			var someTimeAgo = DateTime.Now.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+			var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 			var remainingEntries = new List<KeyValuePair<TKey, CacheEntry<TValue>>>();
 			// Enumerating over the ConcurrentDictionary is thread safe and lock free.
 			foreach (var pair in _cachedEntries)
@@ -394,7 +390,7 @@ namespace ReCache
 		{
 			var entry = new CacheEntry<TValue>();
 			entry.CachedValue = value;
-			entry.TimeLoaded = DateTime.Now;
+			entry.TimeLoaded = DateTime.UtcNow;
 			return _cachedEntries.TryAdd(key, entry);
 		}
 
