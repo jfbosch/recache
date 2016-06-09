@@ -3,7 +3,6 @@ using System.Runtime.Serialization;
 
 namespace ReCache
 {
-
 	[Serializable]
 	public class CircuitBreakerTimeoutException : Exception
 	{

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using System.Threading;
 using ReCache;
+using System.Threading.Tasks.Dataflow;
 
 namespace Tests
 {
@@ -276,7 +277,6 @@ namespace Tests
 				async (key) =>
 				{
 					Interlocked.Increment(ref numberOfLoaderCallInitiations);
-					//Thread.Sleep(random.Next(30, 50));
 					await Task.Delay(random.Next(30, 50)).ConfigureAwait(false);
 					Interlocked.Increment(ref numberOfLoaderCalls);
 					return await Task.FromResult(key.ToString()).ConfigureAwait(false);
@@ -286,8 +286,7 @@ namespace Tests
 				int testKey = 7;
 				string testValue = testKey.ToString();
 
-				var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
-				Parallel.For(0, 500, options, async (i) =>
+				ActionBlock<int> block = new ActionBlock<int>(async (i) =>
 				{
 					try
 					{
@@ -298,11 +297,11 @@ namespace Tests
 							case 300:
 							case 400:
 								// Fetch i as the key
-								var v = await cache.GetOrLoadAsync(i).ConfigureAwait(false);
+								var v = await cache.GetOrLoadAsync(i);
 								v.Should().Be(i.ToString());
 								break;
 							default: // For all others, fetch the same test key.
-								var v2 = await cache.GetOrLoadAsync(testKey).ConfigureAwait(false);
+								var v2 = await cache.GetOrLoadAsync(testKey);
 								v2.Should().Be(testKey.ToString());
 								break;
 						}
@@ -311,14 +310,70 @@ namespace Tests
 					{
 						Interlocked.Increment(ref numberOfCacheRequestsShortCircuited);
 					}
+				}, new ExecutionDataflowBlockOptions
+				{
+					MaxDegreeOfParallelism = 15
 				});
 
+				var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
+				Parallel.For(0, 500, options, (i) =>
+				{
+					block.Post(i);
+				});
+				block.Complete();
+				await block.Completion.ConfigureAwait(false);
+
 				int num = 5;
-				//numberOfCacheRequestsShortCircuited.Should().Be(0, "should not circuit break");
 				numberOfLoaderCallInitiations.Should().Be(num, "1 initiation for each of the hundreds (100 to 400), and 1 for the test key");
 				numberOfLoaderCalls.Should().Be(num, "1 for each of the hundreds (100 to 400), and 1 for the test key");
 				numberOfCacheRequestsShortCircuited.Should().BeGreaterThan(4, "At least some should be too fast (i.e. hit while the key's value is still busy caching), and because the timeout is set very short, it should fail");
 			}
+		}
+
+		[TestMethod]
+		public async Task ShouldNotDeadlock_Loop()
+		{
+			for (int i = 0; i < 150; i++)
+				await FuncShouldNotDeadlock();
+		}
+
+		[TestMethod]
+		public async Task FuncShouldNotDeadlock()
+		{
+			var random = new Random();
+			int numberOfLoaderCallInitiations = await Task.FromResult(0);
+			int numberOfLoaderCalls = await Task.FromResult(0);
+
+			Func<int, Task<string>> loaderFunc = async (key) =>
+			{
+				Interlocked.Increment(ref numberOfLoaderCallInitiations);
+				//Thread.Sleep(random.Next(30, 50));
+				await Task.Delay(random.Next(30, 50)).ConfigureAwait(false);
+				Interlocked.Increment(ref numberOfLoaderCalls);
+				return await Task.FromResult(key.ToString()).ConfigureAwait(false);
+			};
+
+			Func<int, Task<string>> cacheFunc = async (key) =>
+			{
+				await Task.FromResult(0);
+				//Does not deadlock
+				//return loaderFunc(key).Result;
+				//Deadlocks
+				return await loaderFunc(key).ConfigureAwait(false);
+			};
+
+			int testKey = 7;
+
+			int num = 1;
+			var options = new ParallelOptions() { MaxDegreeOfParallelism = 15 };
+			Parallel.For(0, num, options, (i) =>
+			{
+				var v = cacheFunc(testKey).Result;
+				v.Should().Be(testKey.ToString());
+			});
+
+			numberOfLoaderCallInitiations.Should().Be(num, "initiations should match");
+			numberOfLoaderCalls.Should().Be(num, "completions should match");
 		}
 
 		[TestMethod]
