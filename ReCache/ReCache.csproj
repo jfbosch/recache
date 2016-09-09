@@ -68,6 +68,8 @@
     <Compile Include="Fluent.cs" />
     <Compile Include="CacheBuilder.cs" />
     <Compile Include="ICache.cs" />
+    <Compile Include="IKeyValueStore.cs" />
+    <Compile Include="InMemoryKeyValueStore.cs" />
     <Compile Include="ISelfRefreshingCache.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="SelfRefreshingCacheOptions.cs" />

@@ -20,7 +20,7 @@ namespace ReCache
 		private readonly object _disposeLock = new object();
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
-		private readonly ConcurrentDictionary<TKey, CacheEntry<TValue>> _cachedEntries;
+		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _cachedEntries;
 		private CacheOptions _options;
 		private Timer _flushTimer;
 
@@ -50,7 +50,7 @@ namespace ReCache
 
 			LoaderFunction = loaderFunction;
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>();
+			_cachedEntries = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>();
 			this.InitializeFlushTimer();
 		}
 
@@ -71,7 +71,7 @@ namespace ReCache
 				throw new ArgumentNullException(nameof(comparer));
 
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			_cachedEntries = new ConcurrentDictionary<TKey, CacheEntry<TValue>>(comparer);
+			_cachedEntries = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>(comparer);
 			this.InitializeFlushTimer();
 		}
 
