@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReCache
+namespace ReCache.KeyValueStore
 {
 	public class InMemoryKeyValueStore<TKey, TValue> : IKeyValueStore<TKey, TValue>
 	{

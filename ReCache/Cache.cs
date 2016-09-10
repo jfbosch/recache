@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReCache.KeyValueStore;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace ReCache
 		private readonly object _disposeLock = new object();
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
-		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _cachedEntries;
+		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
 		private CacheOptions _options;
 		private Timer _flushTimer;
 
@@ -34,7 +35,7 @@ namespace ReCache
 		/// </summary>
 		public int Count { get { return this.Items.Count(); } }
 
-		public IEnumerable<KeyValuePair<TKey, TValue>> Items { get { return _cachedEntries.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value.CachedValue)); } }
+		public IEnumerable<KeyValuePair<TKey, TValue>> Items { get { return _kvStore.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value.CachedValue)); } }
 
 		public Cache(
 			CacheOptions options)
@@ -50,7 +51,7 @@ namespace ReCache
 
 			LoaderFunction = loaderFunction;
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			_cachedEntries = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>();
+			_kvStore = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>();
 			this.InitializeFlushTimer();
 		}
 
@@ -71,7 +72,7 @@ namespace ReCache
 				throw new ArgumentNullException(nameof(comparer));
 
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			_cachedEntries = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>(comparer);
+			_kvStore = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>(comparer);
 			this.InitializeFlushTimer();
 		}
 
@@ -167,7 +168,7 @@ namespace ReCache
 		private async Task<TValue> GetIfCachedAndNotExpiredElseLoad(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction)
 		{
 			CacheEntry<TValue> entry;
-			if (_cachedEntries.TryGetValue(key, out entry))
+			if (_kvStore.TryGetValue(key, out entry))
 			{
 				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
@@ -205,7 +206,7 @@ namespace ReCache
 			bool resetExpiryTimeoutIfAlreadyCached)
 		{
 			CacheEntry<TValue> entry;
-			if (_cachedEntries.TryGetValue(key, out entry))
+			if (_kvStore.TryGetValue(key, out entry))
 			{
 				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
@@ -231,7 +232,7 @@ namespace ReCache
 			out TValue value)
 		{
 			CacheEntry<TValue> entry;
-			if (_cachedEntries.TryGetValue(key, out entry))
+			if (_kvStore.TryGetValue(key, out entry))
 			{
 				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 				if (entry.TimeLoaded < someTimeAgo)
@@ -267,7 +268,7 @@ namespace ReCache
 			CacheEntry<TValue> entry = new CacheEntry<TValue>();
 			entry.CachedValue = await loaderFunction(key).ConfigureAwait(false);
 			entry.TimeLoaded = DateTime.UtcNow; ;
-			_cachedEntries.AddOrUpdate(key, entry, (k, v) => entry);
+			_kvStore.AddOrUpdate(key, entry, (k, v) => entry);
 			stopwatch.Stop();
 
 			if (this.MissedCallback != null)
@@ -290,7 +291,7 @@ namespace ReCache
 		public bool Invalidate(TKey key)
 		{
 			CacheEntry<TValue> tmp;
-			bool removed = _cachedEntries.TryRemove(key, out tmp);
+			bool removed = _kvStore.TryRemove(key, out tmp);
 			if (removed)
 				DisposeEntry(tmp);
 			return removed;
@@ -301,19 +302,19 @@ namespace ReCache
 			// Clear() acquires all internal locks simultaneously, so will cause more contention.
 			//_cachedEntries.Clear();
 
-			foreach (var pair in _cachedEntries)
+			foreach (var pair in _kvStore)
 				Invalidate(pair.Key);
 		}
 
 		public bool HasKey(TKey key)
 		{
 			CacheEntry<TValue> tmp;
-			return _cachedEntries.TryGetValue(key, out tmp);
+			return _kvStore.TryGetValue(key, out tmp);
 		}
 
 		public void FlushInvalidatedEntries()
 		{
-			var entriesBeforeFlush = _cachedEntries.ToList();
+			var entriesBeforeFlush = _kvStore.ToList();
 			var stopwatch = new Stopwatch();
 			stopwatch.Start();
 
@@ -321,7 +322,7 @@ namespace ReCache
 			var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
 			var remainingEntries = new List<KeyValuePair<TKey, CacheEntry<TValue>>>();
 			// Enumerating over the ConcurrentDictionary is thread safe and lock free.
-			foreach (var pair in _cachedEntries)
+			foreach (var pair in _kvStore)
 			{
 				var key = pair.Key;
 				var entry = pair.Value;
@@ -383,7 +384,7 @@ namespace ReCache
 
 		public IEnumerator<KeyValuePair<TKey, CacheEntry<TValue>>> GetEnumerator()
 		{
-			return _cachedEntries.GetEnumerator();
+			return _kvStore.GetEnumerator();
 		}
 
 		public bool TryAdd(TKey key, TValue value)
@@ -391,7 +392,7 @@ namespace ReCache
 			var entry = new CacheEntry<TValue>();
 			entry.CachedValue = value;
 			entry.TimeLoaded = DateTime.UtcNow;
-			return _cachedEntries.TryAdd(key, entry);
+			return _kvStore.TryAdd(key, entry);
 		}
 
 		public void Dispose()

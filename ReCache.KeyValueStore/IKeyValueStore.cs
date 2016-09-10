@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ReCache
+namespace ReCache.KeyValueStore
 {
 	public interface IKeyValueStore<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
 	{

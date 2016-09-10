@@ -68,8 +68,6 @@
     <Compile Include="Fluent.cs" />
     <Compile Include="CacheBuilder.cs" />
     <Compile Include="ICache.cs" />
-    <Compile Include="IKeyValueStore.cs" />
-    <Compile Include="InMemoryKeyValueStore.cs" />
     <Compile Include="ISelfRefreshingCache.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="SelfRefreshingCacheOptions.cs" />
@@ -87,6 +85,12 @@
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDictionary Include="dictionary.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ReCache.KeyValueStore\ReCache.KeyValueStore.csproj">
+      <Project>{243dd9c8-1b6c-4a45-a3d1-540cef15178b}</Project>
+      <Name>ReCache.KeyValueStore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
