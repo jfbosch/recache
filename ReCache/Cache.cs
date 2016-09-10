@@ -56,6 +56,21 @@ namespace ReCache
 		}
 
 		public Cache(
+			CacheOptions options,
+			IKeyValueStore<TKey, TValue> kvStore,
+			Func<TKey, Task<TValue>> loaderFunction)
+		{
+			this.SetOptions(options);
+
+			LoaderFunction = loaderFunction;
+			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
+			//_kvStore = kvStore;
+			//BookMark??
+			_kvStore = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>();
+			this.InitializeFlushTimer();
+		}
+
+		public Cache(
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options)
 			: this(comparer, options, null)

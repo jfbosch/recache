@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StackExchange.Redis;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,25 +9,30 @@ using System.Threading.Tasks;
 
 namespace ReCache.KeyValueStore
 {
-	/// <summary>
-	/// The InMemoryKeyValueStore is implemented on ConcurrentDictionary<TKey, TValue>.
-	/// </summary>
-	/// <typeparam name="TKey"></typeparam>
-	/// <typeparam name="TValue"></typeparam>
-	public class InMemoryKeyValueStore<TKey, TValue> : IKeyValueStore<TKey, TValue>
+	public class RedisKeyValueStore<TKey, TValue> : IKeyValueStore<TKey, TValue>
 	{
-		private readonly ConcurrentDictionary<TKey, CacheEntry<TValue>> _entries;
+		private readonly ConcurrentDictionary<TKey, TValue> _entries;
+		private readonly ConnectionMultiplexer _connectionMultiplexer;
 
-		public InMemoryKeyValueStore()
+		public RedisKeyValueStore(ConnectionMultiplexer connectionMultiplexer)
 		{
+			if (connectionMultiplexer == null)
+				throw new ArgumentNullException(nameof(connectionMultiplexer));
+
+			_connectionMultiplexer = connectionMultiplexer;
 			_entries = new ConcurrentDictionary<TKey, TValue>();
 		}
 
-		public InMemoryKeyValueStore(IEqualityComparer<TKey> comparer)
+		public RedisKeyValueStore(
+			ConnectionMultiplexer connectionMultiplexer,
+			IEqualityComparer<TKey> comparer)
 		{
+			if (connectionMultiplexer == null)
+				throw new ArgumentNullException(nameof(connectionMultiplexer));
 			if (comparer == null)
 				throw new ArgumentNullException(nameof(comparer));
 
+			_connectionMultiplexer = connectionMultiplexer;
 			_entries = new ConcurrentDictionary<TKey, TValue>(comparer);
 		}
 

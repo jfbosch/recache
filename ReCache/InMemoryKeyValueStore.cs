@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReCache.KeyValueStore;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReCache.KeyValueStore
+namespace ReCache
 {
 	/// <summary>
 	/// The InMemoryKeyValueStore is implemented on ConcurrentDictionary<TKey, TValue>.
@@ -15,7 +16,7 @@ namespace ReCache.KeyValueStore
 	/// <typeparam name="TValue"></typeparam>
 	public class InMemoryKeyValueStore<TKey, TValue> : IKeyValueStore<TKey, TValue>
 	{
-		private readonly ConcurrentDictionary<TKey, CacheEntry<TValue>> _entries;
+		private readonly ConcurrentDictionary<TKey, TValue> _entries;
 
 		public InMemoryKeyValueStore()
 		{
