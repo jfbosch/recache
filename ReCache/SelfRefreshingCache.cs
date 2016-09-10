@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReCache.KeyValueStore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,8 @@ namespace ReCache
 
 		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
 		private Action<TKey, CacheEntry<TValue>, int> _generationCacheMissedCallback;
+
+		public string CacheName => _generationCache.CacheName;
 
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.
@@ -285,12 +288,12 @@ namespace ReCache
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "SelfRefreshingCache")]
 		public Task<TValue> GetOrLoadAsync(TKey key, Func<TKey, Task<TValue>> loaderFunction)
 		{
-			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
+			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache. CacheName: " + this.CacheName);
 		}
 
 		public Task<TValue> GetOrLoadAsync(TKey key, bool resetExpiryTimeoutIfAlreadyCached, Func<TKey, Task<TValue>> loaderFunction)
 		{
-			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache");
+			throw new NotImplementedException("Custom loaders do not make sense in a SelfRefreshingCache. CacheName: " + this.CacheName);
 		}
 
 		public Action<TKey, CacheEntry<TValue>> HitCallback

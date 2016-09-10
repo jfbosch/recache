@@ -19,6 +19,8 @@ namespace ReCache
 	{
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
+		private string _cacheName = "(NotSet)";
+		public string CacheName => _cacheName;
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
 		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
@@ -56,17 +58,24 @@ namespace ReCache
 		}
 
 		public Cache(
+			string cacheName,
 			CacheOptions options,
-			IKeyValueStore<TKey, TValue> kvStore,
+			IKeyValueStore<TKey, CacheEntry<TValue>> kvStore,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
+			if (cacheName == null)
+				throw new ArgumentNullException(nameof(cacheName));
+			if (string.IsNullOrWhiteSpace(cacheName))
+				throw new ArgumentException(nameof(cacheName) + " may not have the value '" + cacheName + "'.");
+			if (kvStore == null)
+				throw new ArgumentNullException(nameof(kvStore));
+
 			this.SetOptions(options);
 
+			_cacheName = cacheName;
 			LoaderFunction = loaderFunction;
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			//_kvStore = kvStore;
-			//BookMark??
-			_kvStore = new InMemoryKeyValueStore<TKey, CacheEntry<TValue>>();
+			_kvStore = kvStore;
 			this.InitializeFlushTimer();
 		}
 
@@ -75,6 +84,15 @@ namespace ReCache
 			CacheOptions options)
 			: this(comparer, options, null)
 		{
+		}
+
+		public Cache(
+			string cacheName,
+			CacheOptions options,
+			IKeyValueStore<TKey, CacheEntry<TValue>> kvStore)
+			: this(cacheName, options, kvStore, null)
+		{
+			//BookMark??
 		}
 
 		public Cache(
@@ -122,13 +140,13 @@ namespace ReCache
 		private void SetOptions(CacheOptions options)
 		{
 			if (options == null)
-				throw new ArgumentNullException(nameof(options));
+				throw new ArgumentNullException(nameof(options) + "; CacheName: " + CacheName);
 			if (options.MaximumCacheSizeIndicator < 1)
-				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1.");
+				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + CacheName);
 			if (options.CacheItemExpiry.TotalMilliseconds < 10)
-				throw new ArgumentException("CacheExpiry cannot be less than 10 ms.");
+				throw new ArgumentException("CacheExpiry cannot be less than 10 ms. CacheName: " + CacheName);
 			if (options.FlushInterval.TotalMilliseconds < 50)
-				throw new ArgumentException("FlushInterval cannot be less than 50 ms.");
+				throw new ArgumentException("FlushInterval cannot be less than 50 ms. CacheName: " + CacheName);
 			_options = options;
 		}
 
@@ -165,7 +183,7 @@ namespace ReCache
 			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
 			if (!gotKeyLockBeforeTimeout)
 			{
-				throw new CircuitBreakerTimeoutException("The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
+				throw new CircuitBreakerTimeoutException("CacheName: " + _cacheName + ". The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
 			}
 			else // Got the key gate lock.
 			{

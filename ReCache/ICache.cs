@@ -35,6 +35,7 @@ namespace ReCache
 		void FlushInvalidatedEntries();
 
 		int Count { get; }
+		string CacheName { get; }
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 		IEnumerable<KeyValuePair<TKey, TValue>> Items { get; }
