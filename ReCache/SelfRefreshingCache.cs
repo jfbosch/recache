@@ -99,21 +99,7 @@ namespace ReCache
 					nextGeneration = 0;
 
 				// Populate the next generation cache before we switch it to be the active, current generation.
-				var currentGenerationEntries = _generationCache
-					.Where(entry => entry.Key.Item2 == _currentGeneration)
-					// Start with the freshist entries.
-					.OrderByDescending(entry => entry.Value.TimeLoaded);
-
-				int itemCount = 0;
-				foreach (var entry in currentGenerationEntries)
-				{
-					await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration)).ConfigureAwait(false);
-
-					itemCount++;
-					if (itemCount >= _options.StandardCacheOptions.MaximumCacheSizeIndicator)
-						// Stop migrating entries to the next generation if we have reached the max.
-						break;
-				}
+				var currentGenerationEntries = await LoadNextGenerationAsync(nextGeneration);
 
 				// The next generation's cache entries have been loaded, so let's switch to it.
 				int previousGeneration = Interlocked.Exchange(ref _currentGeneration, nextGeneration);
@@ -136,6 +122,33 @@ namespace ReCache
 			{
 				_refresherTimer.Start();
 			}
+		}
+
+		private async Task<IOrderedEnumerable<KeyValuePair<Tuple<TKey, int>, CacheEntry<TValue>>>> LoadNextGenerationAsync(int nextGeneration)
+		{
+			var currentGenerationEntriesToRefresh = _generationCache
+				.Where(entry => entry.Key.Item2 == _currentGeneration)
+				//.Where(entry => WasLastAccessedWithinExpiryTimeSpan(entry))
+				// Start with the freshist entries.
+				.OrderByDescending(entry => entry.Value.TimeLoaded);
+
+			int itemCount = 0;
+			foreach (var entry in currentGenerationEntriesToRefresh)
+			{
+				await _generationCache.GetOrLoadAsync(GenerationKey(entry.Key.Item1, nextGeneration)).ConfigureAwait(false);
+
+				itemCount++;
+				if (itemCount >= _options.StandardCacheOptions.MaximumCacheSizeIndicator)
+					// Stop migrating entries to the next generation if we have reached the max.
+					break;
+			}
+
+			return currentGenerationEntriesToRefresh;
+		}
+
+		private bool WasLastAccessedWithinExpiryTimeSpan(KeyValuePair<Tuple<TKey, int>, CacheEntry<TValue>> entry)
+		{
+			return (DateTime.UtcNow - entry.Value.TimeLastAccessed) < this._options.StandardCacheOptions.CacheItemExpiry;
 		}
 
 		public async Task<TValue> GetOrLoadAsync(

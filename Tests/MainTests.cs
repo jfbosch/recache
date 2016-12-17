@@ -456,6 +456,31 @@ namespace Tests
 		}
 
 		[TestMethod]
+		public async Task SelfRefreshingCacheEntriesNotRecentlyAccessedShouldBeFlushedOnRefresh()
+		{
+			var _cache = new SelfRefreshingCache<int, string>(
+				new SelfRefreshingCacheOptions
+				{
+					RefreshInterval = TimeSpan.FromMilliseconds(300),
+					StandardCacheOptions = new CacheOptions
+					{
+						CacheItemExpiry = TimeSpan.FromMilliseconds(600),
+						FlushInterval = TimeSpan.FromMilliseconds(550000),
+						MaximumCacheSizeIndicator = 99
+					}
+				},
+				IntLoaderFunc);
+			
+			for (int i = 0; i < 99; i++)
+				await _cache.GetOrLoadAsync(i);
+
+			_cache.Count.Should().Be(99);
+			Thread.Sleep(3700);
+			//BookMark?? Haven't finished this test out yet or whether the implementation will work - JB
+			_cache.Count.Should().Be(0);
+		}
+
+		[TestMethod]
 		public async Task TryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new Cache<int, string>(
