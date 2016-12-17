@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace ReCache.KeyValueStore
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public interface IKeyValueStore<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
 	{
 		TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory);

@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace ReCache.KeyValueStore
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Redis")]
 	public class RedisKeyValueStore<TKey, TValue> : IKeyValueStore<TKey, TValue>
 	{
 		private readonly ConcurrentDictionary<TKey, TValue> _entries;
@@ -21,6 +23,8 @@ namespace ReCache.KeyValueStore
 
 			_connectionMultiplexer = connectionMultiplexer;
 			_entries = new ConcurrentDictionary<TKey, TValue>();
+
+			throw new NotImplementedException("This class has not yet been fully implemented and tested. Feel free to submit a pull request.");
 		}
 
 		public RedisKeyValueStore(

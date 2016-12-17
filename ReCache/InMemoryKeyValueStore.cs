@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace ReCache
 {
+	/* Read the following link and understand how ConcurrentDictionary works before modifying this class.
+	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
+	 */
+
 	/// <summary>
 	/// The InMemoryKeyValueStore is implemented on ConcurrentDictionary<TKey, TValue>.
 	/// </summary>
