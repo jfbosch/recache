@@ -19,8 +19,7 @@ namespace ReCache
 	{
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
-		private string _cacheName = "(NotSet)";
-		public string CacheName => _cacheName;
+		public string CacheName => this._options.CacheName;
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
 		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
@@ -58,41 +57,10 @@ namespace ReCache
 		}
 
 		public Cache(
-			string cacheName,
-			CacheOptions options,
-			IKeyValueStore<TKey, CacheEntry<TValue>> kvStore,
-			Func<TKey, Task<TValue>> loaderFunction)
-		{
-			if (cacheName == null)
-				throw new ArgumentNullException(nameof(cacheName));
-			if (string.IsNullOrWhiteSpace(cacheName))
-				throw new ArgumentException(nameof(cacheName) + " may not have the value '" + cacheName + "'.");
-			if (kvStore == null)
-				throw new ArgumentNullException(nameof(kvStore));
-
-			this.SetOptions(options);
-
-			_cacheName = cacheName;
-			LoaderFunction = loaderFunction;
-			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
-			_kvStore = kvStore;
-			this.InitializeFlushTimer();
-		}
-
-		public Cache(
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options)
 			: this(comparer, options, null)
 		{
-		}
-
-		public Cache(
-			string cacheName,
-			CacheOptions options,
-			IKeyValueStore<TKey, CacheEntry<TValue>> kvStore)
-			: this(cacheName, options, kvStore, null)
-		{
-			//BookMark??
 		}
 
 		public Cache(
@@ -183,7 +151,7 @@ namespace ReCache
 			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
 			if (!gotKeyLockBeforeTimeout)
 			{
-				throw new CircuitBreakerTimeoutException("CacheName: " + _cacheName + ". The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
+				throw new CircuitBreakerTimeoutException("CacheName: " + this.CacheName + ". The key's value is already busy loading, but the CircuitBreakerTimeoutForAdditionalThreadsPerKey of {1} ms has been reached. Hitting the cache again with the same key after a short while might work. Key: {0}".FormatWith(key.ToString(), _options.CircuitBreakerTimeoutForAdditionalThreadsPerKey.TotalMilliseconds));
 			}
 			else // Got the key gate lock.
 			{

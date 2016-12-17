@@ -402,13 +402,14 @@ namespace Tests
 			var _cache = new Cache<int, string>(
 				new CacheOptions
 				{
+					CacheName = nameof(TestCacheFlushCallback),
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
 					FlushInterval = TimeSpan.FromMilliseconds(500),
 					MaximumCacheSizeIndicator = 1000
 				},
 				IntLoaderFunc);
 
-			var flushCallbackRaised = 0;
+			int flushCallbackRaised = 0;
 
 			_cache.MissedCallback = (key, cacheEntry, durationMilliseconds) =>
 			{
@@ -421,11 +422,11 @@ namespace Tests
 				flushCallbackRaised++;
 			};
 
-			Parallel.For(0, 1000, async (i) => await _cache.GetOrLoadAsync(i));
+			Parallel.For(0, 1000, (i) => _cache.GetOrLoadAsync(i).Wait());
 			_cache.Count.Should().Be(1000);
 			await Task.Delay(500);
 			_cache.Count.Should().Be(1000);
-			await Task.Delay(1700);
+			await Task.Delay(700);
 			_cache.Count.Should().Be(0);
 			flushCallbackRaised.Should().Be(4);
 		}

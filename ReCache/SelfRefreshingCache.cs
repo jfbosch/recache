@@ -44,17 +44,11 @@ namespace ReCache
 		/// <summary>
 		/// Returns the number of items in the cache by enumerating them (non-locking).
 		/// </summary>
-		public int Count { get { return this.Items.Count(); } }
+		public int Count => this.Items.Count();
 
-		public IEnumerable<KeyValuePair<TKey, TValue>> Items
-		{
-			get
-			{
-				return _generationCache
-				 .Where(x => x.Key.Item2 == _currentGeneration)
-				 .Select(x => new KeyValuePair<TKey, TValue>(x.Key.Item1, x.Value.CachedValue));
-			}
-		}
+		public IEnumerable<KeyValuePair<TKey, TValue>> Items => _generationCache
+			.Where(x => x.Key.Item2 == _currentGeneration)
+			.Select(x => new KeyValuePair<TKey, TValue>(x.Key.Item1, x.Value.CachedValue));
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 		public SelfRefreshingCache(

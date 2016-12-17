@@ -5,6 +5,8 @@ namespace ReCache
 {
 	public class CacheOptions
 	{
+		public string CacheName { get; set; }
+
 		/// <summary>
 		/// This option determines how the cache behaves when new requests come in on threads for a key that is already being fetched by the loader func.
 		/// When specified, an exception is thrown on the secondary threads requesting the same key when the wait period times out, letting the client deal with the fact that the cache is not yet warm.
@@ -64,6 +66,7 @@ namespace ReCache
 		public CacheOptions()
 		{
 			// Set some logical defaults.
+			this.CacheName = "(NotSet)";
 			this.MaximumCacheSizeIndicator = 10000;
 			this.CacheItemExpiry = TimeSpan.FromSeconds(60);
 			this.FlushInterval = TimeSpan.FromSeconds(120);
