@@ -58,9 +58,9 @@ namespace ReCache
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 			if ((options.RefreshInterval.TotalMilliseconds / options.StandardCacheOptions.CacheItemExpiry.TotalMilliseconds * 100) > 50)
-				throw new ArgumentException("The RefreshInterval may at most be 50% of the length of the CacheItemExpiry to allow for ample reload time, else the cache will experience unnecessary, possibly concurrent, misses. Either decrease the refresh interval, or increase the expiry timeout.");
+				throw new ArgumentException("The RefreshInterval may at most be 50% of the length of the CacheItemExpiry to allow for ample reload time, else the cache will experience unnecessary, possibly concurrent, misses. Either decrease the refresh interval, or increase the expiry timeout. CacheName: " + options.StandardCacheOptions.CacheName);
 			if (loaderFunction == null)
-				throw new ArgumentNullException(nameof(loaderFunction));
+				throw new ArgumentNullException(nameof(loaderFunction) + ";  CacheName: " + options.StandardCacheOptions.CacheName);
 
 			_options = options;
 
@@ -99,7 +99,7 @@ namespace ReCache
 					nextGeneration = 0;
 
 				// Populate the next generation cache before we switch it to be the active, current generation.
-				var currentGenerationEntries = await LoadNextGenerationAsync(nextGeneration);
+				var currentGenerationEntriesToRefresh = await LoadNextGenerationAsync(nextGeneration).ConfigureAwait(false);
 
 				// The next generation's cache entries have been loaded, so let's switch to it.
 				int previousGeneration = Interlocked.Exchange(ref _currentGeneration, nextGeneration);
@@ -113,7 +113,7 @@ namespace ReCache
 
 				if (this.RefreshCacheCallback != null)
 				{
-					var contexts = currentGenerationEntries.Select(x => x.Value.ClientContext).Distinct().ToList();
+					var contexts = currentGenerationEntriesToRefresh.Select(x => x.Value.ClientContext).Distinct().ToList();
 					int elapsedMillisecondsPerContext = (int)stopwatch.ElapsedMilliseconds.SafeDivideBy(contexts.Count(), stopwatch.ElapsedMilliseconds);
 					contexts.ForEach(context => this.RefreshCacheCallback(_currentGeneration, elapsedMillisecondsPerContext, context));
 				}
@@ -128,9 +128,8 @@ namespace ReCache
 		{
 			var currentGenerationEntriesToRefresh = _generationCache
 				.Where(entry => entry.Key.Item2 == _currentGeneration)
-				//.Where(entry => WasLastAccessedWithinExpiryTimeSpan(entry))
-				// Start with the freshist entries.
-				.OrderByDescending(entry => entry.Value.TimeLoaded);
+				// Start with the freshist accessed entries.
+				.OrderByDescending(entry => entry.Value.TimeLastAccessed);
 
 			int itemCount = 0;
 			foreach (var entry in currentGenerationEntriesToRefresh)
@@ -144,11 +143,6 @@ namespace ReCache
 			}
 
 			return currentGenerationEntriesToRefresh;
-		}
-
-		private bool WasLastAccessedWithinExpiryTimeSpan(KeyValuePair<Tuple<TKey, int>, CacheEntry<TValue>> entry)
-		{
-			return (DateTime.UtcNow - entry.Value.TimeLastAccessed) < this._options.StandardCacheOptions.CacheItemExpiry;
 		}
 
 		public async Task<TValue> GetOrLoadAsync(

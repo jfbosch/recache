@@ -108,13 +108,14 @@ namespace ReCache
 		private void SetOptions(CacheOptions options)
 		{
 			if (options == null)
-				throw new ArgumentNullException(nameof(options) + "; CacheName: " + CacheName);
+				throw new ArgumentNullException(nameof(options));
 			if (options.MaximumCacheSizeIndicator < 1)
-				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + CacheName);
+				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + options.CacheName);
 			if (options.CacheItemExpiry.TotalMilliseconds < 10)
-				throw new ArgumentException("CacheExpiry cannot be less than 10 ms. CacheName: " + CacheName);
+				throw new ArgumentException("CacheExpiry cannot be less than 10 ms. CacheName: " + options.CacheName);
 			if (options.FlushInterval.TotalMilliseconds < 50)
-				throw new ArgumentException("FlushInterval cannot be less than 50 ms. CacheName: " + CacheName);
+				throw new ArgumentException("FlushInterval cannot be less than 50 ms. CacheName: " + options.CacheName);
+
 			_options = options;
 		}
 
@@ -343,6 +344,7 @@ namespace ReCache
 				int numberOfEntriesToTrim = remainingEntries.Count - _options.MaximumCacheSizeIndicator;
 				var keysToRemove = remainingEntries
 					.OrderBy(p => p.Value.TimeLoaded)
+					.ThenBy(p => p.Value.TimeLastAccessed)
 					.Take(numberOfEntriesToTrim)
 					.ToList();
 

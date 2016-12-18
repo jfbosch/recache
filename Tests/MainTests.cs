@@ -424,11 +424,11 @@ namespace Tests
 
 			Parallel.For(0, 1000, (i) => _cache.GetOrLoadAsync(i).Wait());
 			_cache.Count.Should().Be(1000);
-			await Task.Delay(500);
-			_cache.Count.Should().Be(1000);
 			await Task.Delay(700);
+			_cache.Count.Should().Be(1000);
+			await Task.Delay(1500);
 			_cache.Count.Should().Be(0);
-			flushCallbackRaised.Should().Be(4);
+			flushCallbackRaised.Should().BeGreaterOrEqualTo(5);
 		}
 
 		[TestMethod]
@@ -461,23 +461,36 @@ namespace Tests
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
 				{
-					RefreshInterval = TimeSpan.FromMilliseconds(300),
+					RefreshInterval = TimeSpan.FromMilliseconds(100),
 					StandardCacheOptions = new CacheOptions
 					{
-						CacheItemExpiry = TimeSpan.FromMilliseconds(600),
-						FlushInterval = TimeSpan.FromMilliseconds(550000),
+						CacheItemExpiry = TimeSpan.FromMilliseconds(6000),
+						FlushInterval = TimeSpan.FromMilliseconds(50000),
 						MaximumCacheSizeIndicator = 99
 					}
 				},
 				IntLoaderFunc);
-			
-			for (int i = 0; i < 99; i++)
+
+			for (int i = 0; i < 199; i++)
 				await _cache.GetOrLoadAsync(i);
 
+			_cache.Count.Should().Be(199);
+
+			// Refresh the access of key 80 to 169. (these should be the surviving 99 keys)
+			Thread.Sleep(5);
+			for (int i = 80; i < 169; i++)
+				await _cache.GetOrLoadAsync(i);
+
+			// Wait for refresh timer to refresh keys to the new generation
+			Thread.Sleep(700);
+
 			_cache.Count.Should().Be(99);
-			Thread.Sleep(3700);
-			//BookMark?? Haven't finished this test out yet or whether the implementation will work - JB
-			_cache.Count.Should().Be(0);
+			_cache.Items.Count().Should().Be(99);
+			foreach (var item in _cache.Items)
+			{
+				item.Key.Should().BeGreaterOrEqualTo(80);
+				item.Key.Should().BeLessThan(169);
+			}
 		}
 
 		[TestMethod]
@@ -558,7 +571,7 @@ namespace Tests
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
 				{
-					RefreshInterval = TimeSpan.FromMilliseconds(5),
+					RefreshInterval = TimeSpan.FromMilliseconds(50),
 					StandardCacheOptions = new CacheOptions
 					{
 						CacheItemExpiry = TimeSpan.FromMinutes(1),
@@ -568,7 +581,11 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
+			Parallel.For(0, 5, (i) =>
+			{
+				_cache.GetOrLoadAsync(i).Wait();
+				Thread.Sleep(1);
+			});
 			_cache.Count.Should().Be(5);
 
 			_cache.Items.Should().NotBeNull();
