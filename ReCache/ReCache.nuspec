@@ -11,8 +11,9 @@
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
 		<releaseNotes>
-Remove unneeded hack that sometimes caused deadlocks.
-Switch from DateTime.Now to DateTime.UtcNow for faster performance when tracking expired entries.
+You can now specify a name for the cache in the options.
+The name is used in any exceptions. This makes debugging much easier if loader funcs throw or circuit breaker exceptions happen and you have more than 1 cache in your project.
+The Self-refreshing Cache will now first refresh entries that were accessed more recently before refreshing older accessed entries. This means that the most relevant keys will remain in the cache if the Max Cache Size Indicator is exceeded. 
 		</releaseNotes>
 		<copyright>Copyright 2015</copyright>
 		<tags>Cache .net in-memory performance</tags>
