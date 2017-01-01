@@ -419,8 +419,8 @@ namespace Tests
 
 			_cache.FlushCallback = (count, itemsRemoved, clientContext, millisecondElapsed) =>
 			{
-				Console.WriteLine("flushCallBackRaised...count :{0}, itemsRemoved: {1}, clientContext : {2}, millisecondElapsed: {3} ", count, itemsRemoved, clientContext, millisecondElapsed);
-				flushCallbackRaised++;
+				//Console.WriteLine("flushCallBackRaised...count :{0}, itemsRemoved: {1}, clientContext : {2}, millisecondElapsed: {3} ", count, itemsRemoved, clientContext, millisecondElapsed);
+				Interlocked.Increment(ref flushCallbackRaised);
 			};
 
 			Parallel.For(0, 1000, (i) => _cache.GetOrLoadAsync(i).Wait());
