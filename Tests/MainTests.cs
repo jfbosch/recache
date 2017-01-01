@@ -457,17 +457,18 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public async Task SelfRefreshingCacheEntriesNotRecentlyAccessedShouldBeFlushedOnRefreshBeforeOthers()
+		public async Task SelfrefreshingCacheShouldPurgedMoreRecentlyAccessedEntriesLastWhileRefreshing()
 		{
+			int refreshMs = 50;
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
 				{
-					RefreshInterval = TimeSpan.FromMilliseconds(50),
+					RefreshInterval = TimeSpan.FromMilliseconds(refreshMs),
 					StandardCacheOptions = new CacheOptions
 					{
 						CacheItemExpiry = TimeSpan.FromMinutes(1),
 						FlushInterval = TimeSpan.FromHours(1),
-						MaximumCacheSizeIndicator = 99
+						MaximumCacheSizeIndicator = 90
 					}
 				},
 				IntLoaderFunc);
@@ -478,17 +479,17 @@ namespace Tests
 			_cache.Count.Should().Be(199);
 
 			Thread.Sleep(10);
-			// Refresh the access of key 70 to 169. (these should be the surviving 99 keys)
-			for (int i = 70; i <= 169; i++)
+			// Refresh the access of key 100 to 190. (these should be the surviving 90 keys)
+			for (int i = 100; i <= 190; i++)
 				await _cache.GetOrLoadAsync(i);
 
 			// Wait for refresh timer to refresh keys to the new generation
-			Thread.Sleep(60);
-			_cache.Count.Should().Be(99);
+			Thread.Sleep(refreshMs + 20);
+			_cache.Count.Should().Be(90);
 			foreach (var item in _cache.Items.Reverse())
 			{
-				item.Key.Should().BeGreaterOrEqualTo(70);
-				item.Key.Should().BeLessOrEqualTo(169);
+				item.Key.Should().BeGreaterOrEqualTo(100);
+				item.Key.Should().BeLessOrEqualTo(190);
 			}
 		}
 
