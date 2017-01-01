@@ -8,6 +8,7 @@ using FluentAssertions;
 using System.Threading;
 using ReCache;
 using System.Threading.Tasks.Dataflow;
+using System.Diagnostics;
 
 namespace Tests
 {
@@ -456,40 +457,38 @@ namespace Tests
 		}
 
 		[TestMethod]
-		public async Task SelfRefreshingCacheEntriesNotRecentlyAccessedShouldBeFlushedOnRefresh()
+		public async Task SelfRefreshingCacheEntriesNotRecentlyAccessedShouldBeFlushedOnRefreshBeforeOthers()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
 				new SelfRefreshingCacheOptions
 				{
-					RefreshInterval = TimeSpan.FromMilliseconds(100),
+					RefreshInterval = TimeSpan.FromMilliseconds(50),
 					StandardCacheOptions = new CacheOptions
 					{
-						CacheItemExpiry = TimeSpan.FromMilliseconds(6000),
-						FlushInterval = TimeSpan.FromMilliseconds(50000),
+						CacheItemExpiry = TimeSpan.FromMinutes(1),
+						FlushInterval = TimeSpan.FromHours(1),
 						MaximumCacheSizeIndicator = 99
 					}
 				},
 				IntLoaderFunc);
 
-			for (int i = 0; i < 199; i++)
+			for (int i = 1; i <= 199; i++)
 				await _cache.GetOrLoadAsync(i);
 
 			_cache.Count.Should().Be(199);
 
-			// Refresh the access of key 80 to 169. (these should be the surviving 99 keys)
-			Thread.Sleep(5);
-			for (int i = 80; i < 169; i++)
+			Thread.Sleep(10);
+			// Refresh the access of key 70 to 169. (these should be the surviving 99 keys)
+			for (int i = 70; i <= 169; i++)
 				await _cache.GetOrLoadAsync(i);
 
 			// Wait for refresh timer to refresh keys to the new generation
-			Thread.Sleep(700);
-
+			Thread.Sleep(60);
 			_cache.Count.Should().Be(99);
-			_cache.Items.Count().Should().Be(99);
-			foreach (var item in _cache.Items)
+			foreach (var item in _cache.Items.Reverse())
 			{
-				item.Key.Should().BeGreaterOrEqualTo(80);
-				item.Key.Should().BeLessThan(169);
+				item.Key.Should().BeGreaterOrEqualTo(70);
+				item.Key.Should().BeLessOrEqualTo(169);
 			}
 		}
 
