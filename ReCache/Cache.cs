@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using static System.FormattableString;
 
 namespace ReCache
 {
@@ -110,11 +111,13 @@ namespace ReCache
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 			if (options.MaximumCacheSizeIndicator < 1)
-				throw new ArgumentException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + options.CacheName);
+				throw new CacheOptionsException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + options.CacheName);
 			if (options.CacheItemExpiry.TotalMilliseconds < 10)
-				throw new ArgumentException("CacheExpiry cannot be less than 10 ms. CacheName: " + options.CacheName);
+				throw new CacheOptionsException("CacheExpiry cannot be less than 10 ms. CacheName: " + options.CacheName);
 			if (options.FlushInterval.TotalMilliseconds < 50)
-				throw new ArgumentException("FlushInterval cannot be less than 50 ms. CacheName: " + options.CacheName);
+				throw new CacheOptionsException("FlushInterval cannot be less than 50 ms. CacheName: " + options.CacheName);
+			if (options.CacheItemExpiryPercentageRandomization < 0 || options.CacheItemExpiryPercentageRandomization > 90)
+				throw new CacheOptionsException(Invariant($"{nameof(CacheOptions)}.{nameof(options.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 90. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {options.CacheItemExpiryPercentageRandomization}."));
 
 			_options = options;
 		}

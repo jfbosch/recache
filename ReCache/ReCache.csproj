@@ -63,6 +63,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CacheOptionsException.cs" />
     <Compile Include="CircuitBreakerTimeoutException.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Fluent.cs" />
