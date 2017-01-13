@@ -116,9 +116,8 @@ namespace ReCache
 				throw new CacheOptionsException("CacheExpiry cannot be less than 10 ms. CacheName: " + options.CacheName);
 			if (options.FlushInterval.TotalMilliseconds < 50)
 				throw new CacheOptionsException("FlushInterval cannot be less than 50 ms. CacheName: " + options.CacheName);
-			if (options.CacheItemExpiryPercentageRandomization < 0 || options.CacheItemExpiryPercentageRandomization > 90)
-				throw new CacheOptionsException(Invariant($"{nameof(CacheOptions)}.{nameof(options.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 90. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {options.CacheItemExpiryPercentageRandomization}."));
 
+			options.CalculateCacheItemExpiryPercentageRandomizationMilliseconds();
 			_options = options;
 		}
 

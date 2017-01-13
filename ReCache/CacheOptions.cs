@@ -46,13 +46,20 @@ namespace ReCache
 		public TimeSpan CacheItemExpiry { get; set; }
 
 		/// <summary>
-		/// The percentage of the expiry time span, taken from the end, to randomise in. For example, if the CacheItemExpiry is 60 seconds, and the CacheItemExpiryPercentageRandomization is set to
-		/// 25 (25%), then the item will be guaranteed to not expire within the first 45 seconds after it has been loaded, but it could expire at any point within the last 15 seconds. This allows
-		/// the cache to distribute the cost of the reloading of expired items, in the case where many keys were loaded in close succession. 
-		/// The values 0 through 90 are supported.
+		/// The percentage of the expiry timespan to randomize, using the endpoint of the timespan as the midpoint of the randomization span. For example, if the CacheItemExpiry is 300 seconds, and
+		/// the CacheItemExpiryPercentageRandomization is set to 10 (10%, which would be 30 seconds), then the item will be guaranteed to expire anywhere from second number 285 to second number 315.
+		/// That is, the random expiry window is between 300 -5% and 300 +5%.  So it distributes the 10% to either side of the specified expiry time (15 seconds to either side).
+		/// This allows the cache to distribute the cost of the reloading of expired items, in the case where many keys were loaded in close succession.The values 0 through 100 are supported.
 		/// The default is 10.
 		/// </summary>
-		public int CacheItemExpiryPercentageRandomization { get; set; }
+		private int _cacheItemExpiryPercentageRandomization = 10;
+		public int CacheItemExpiryPercentageRandomization
+		{
+			get { return _cacheItemExpiryPercentageRandomization; }
+			set { _cacheItemExpiryPercentageRandomization = value; }
+		}
+
+		internal int CacheItemExpiryPercentageRandomizationMilliseconds { get; set; }
 
 		/// <summary>
 		/// If set to true, will check if the cached value implements IDisposable, and if so,
@@ -83,6 +90,17 @@ namespace ReCache
 			this.FlushInterval = TimeSpan.FromSeconds(120);
 			this.LoaderFuncTimeout = TimeSpan.FromSeconds(60);
 			this.CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(2000);
+		}
+
+		internal void CalculateCacheItemExpiryPercentageRandomizationMilliseconds()
+		{
+			if (this.CacheItemExpiryPercentageRandomization < 0 || this.CacheItemExpiryPercentageRandomization > 100)
+				throw new CacheOptionsException(Invariant($"{nameof(CacheOptions)}.{nameof(this.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 100. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {this.CacheItemExpiryPercentageRandomization}."));
+
+			double fraction = this.CacheItemExpiryPercentageRandomization / 100d;
+			double expiryAsMs = this.CacheItemExpiry.TotalMilliseconds;
+			double randomWindowMs = expiryAsMs * fraction;
+			this.CacheItemExpiryPercentageRandomizationMilliseconds = (int)randomWindowMs;
 		}
 	}
 }

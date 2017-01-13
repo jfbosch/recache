@@ -1,14 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ReCache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentAssertions;
 using System.Threading;
-using ReCache;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using System.Diagnostics;
 
 namespace Tests
 {
