@@ -52,12 +52,7 @@ namespace ReCache
 		/// This allows the cache to distribute the cost of the reloading of expired items, in the case where many keys were loaded in close succession.The values 0 through 100 are supported.
 		/// The default is 10.
 		/// </summary>
-		private int _cacheItemExpiryPercentageRandomization = 10;
-		public int CacheItemExpiryPercentageRandomization
-		{
-			get { return _cacheItemExpiryPercentageRandomization; }
-			set { _cacheItemExpiryPercentageRandomization = value; }
-		}
+		public int CacheItemExpiryPercentageRandomization { get; set; }
 
 		internal int CacheItemExpiryPercentageRandomizationMilliseconds { get; set; }
 

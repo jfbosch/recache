@@ -17,6 +17,7 @@ namespace ReCache
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
+		private Random _expiryRandomizer = new Random();
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
 		public string CacheName => this._options.CacheName;
@@ -173,7 +174,7 @@ namespace ReCache
 			CacheEntry<TValue> entry;
 			if (_kvStore.TryGetValue(key, out entry))
 			{
-				var someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+				DateTime someTimeAgo = CalculateExpiryTimeStartOffset();
 				if (entry.TimeLoaded < someTimeAgo)
 				{
 					// Entry is stale, reload.
@@ -197,6 +198,24 @@ namespace ReCache
 
 			// not in cache at all.
 			return (await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
+		}
+
+		private DateTime CalculateExpiryTimeStartOffset()
+		{
+			DateTime someTimeAgo;
+			if (_options.CacheItemExpiryPercentageRandomization == 0)
+				someTimeAgo = DateTime.UtcNow.AddMilliseconds(-_options.CacheItemExpiry.TotalMilliseconds);
+			else
+			{
+				double ms = _options.CacheItemExpiry.TotalMilliseconds;
+				int randomizationWindowMs = _options.CacheItemExpiryPercentageRandomizationMilliseconds;
+				double halfRandomizationWindowMs = randomizationWindowMs / 2d;
+				// Deduct half of the randomization milliseconds based on the provided percentage.
+				ms -= halfRandomizationWindowMs;
+				ms += _expiryRandomizer.Next(randomizationWindowMs + 1);
+				someTimeAgo = DateTime.UtcNow.AddMilliseconds(-ms);
+			}
+			return someTimeAgo;
 		}
 
 		public TValue Get(TKey key)
