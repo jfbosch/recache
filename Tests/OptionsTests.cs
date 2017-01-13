@@ -2,11 +2,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ReCache;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace Tests
 {
@@ -72,7 +67,6 @@ namespace Tests
 			act.ShouldThrow<CacheOptionsException>().Where((x) => x.Message.Contains("It is currently set to the unsupported value of -1."));
 			act = () => WithSpecific(TimeSpan.FromMilliseconds(10), 101);
 			act.ShouldThrow<CacheOptionsException>().Where((x) => x.Message.Contains("It is currently set to the unsupported value of 101."));
-
 		}
 
 	}
