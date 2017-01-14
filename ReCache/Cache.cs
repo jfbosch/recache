@@ -110,14 +110,8 @@ namespace ReCache
 		{
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
-			if (options.MaximumCacheSizeIndicator < 1)
-				throw new CacheOptionsException("MaximumCacheSizeIndicator cannot be less than 1. CacheName: " + options.CacheName);
-			if (options.CacheItemExpiry.TotalMilliseconds < 10)
-				throw new CacheOptionsException("CacheExpiry cannot be less than 10 ms. CacheName: " + options.CacheName);
-			if (options.FlushInterval.TotalMilliseconds < 50)
-				throw new CacheOptionsException("FlushInterval cannot be less than 50 ms. CacheName: " + options.CacheName);
 
-			options.CalculateCacheItemExpiryPercentageRandomizationMilliseconds();
+			options.Initialize();
 			_options = options;
 		}
 

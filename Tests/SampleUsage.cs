@@ -25,7 +25,9 @@ namespace Tests
 
 			var cacheOptions = new CacheOptions
 			{
+				CacheName = nameof(Sample1),
 				CacheItemExpiry = TimeSpan.FromSeconds(1),
+				CacheItemExpiryPercentageRandomization = 0,
 				FlushInterval = TimeSpan.FromSeconds(5),
 				MaximumCacheSizeIndicator = 100
 			};
@@ -75,9 +77,13 @@ namespace Tests
 			};
 
 			var cache = CacheBuilder.Build<int, string>()
-				.CacheItemExpiry(TimeSpan.FromSeconds(1))
-				.FlushInterval(TimeSpan.FromSeconds(5))
+				.WithName(nameof(Sample2WithFluentApi))
+				.CacheItemExpiryFromSeconds(1)
+				.CacheItemExpiryPercentageRandomization(0)
+				.FlushIntervalFromSeconds(5)
 				.MaximumCacheSizeIndicator(100)
+				.CircuitBreakerTimeoutForAdditionalThreadsPerKeyFromSeconds(10)
+				.DisposeExpiredValuesIfDisposable()
 				.LoaderFunction(loaderFunction)
 				.Create();
 

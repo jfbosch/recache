@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading;
+using System.Text;
+
 using static System.FormattableString;
 
 namespace ReCache
@@ -54,6 +56,7 @@ namespace ReCache
 		/// </summary>
 		public int CacheItemExpiryPercentageRandomization { get; set; }
 
+		// Internal property that gets populated from a calculation on CacheItemExpiryPercentageRandomization
 		internal int CacheItemExpiryPercentageRandomizationMilliseconds { get; set; }
 
 		/// <summary>
@@ -73,7 +76,7 @@ namespace ReCache
 		/// been completed will be aborted. If the loader func is aborted,
 		/// an exception will be thrown.
 		/// </summary>
-		public TimeSpan LoaderFuncTimeout { get; set; }
+		//public TimeSpan LoaderFuncTimeout { get; set; }
 
 		public CacheOptions()
 		{
@@ -83,15 +86,28 @@ namespace ReCache
 			this.CacheItemExpiry = TimeSpan.FromSeconds(60);
 			this.CacheItemExpiryPercentageRandomization = 10;
 			this.FlushInterval = TimeSpan.FromSeconds(120);
-			this.LoaderFuncTimeout = TimeSpan.FromSeconds(60);
+			//this.LoaderFuncTimeout = TimeSpan.FromSeconds(60);
 			this.CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(2000);
 		}
 
-		internal void CalculateCacheItemExpiryPercentageRandomizationMilliseconds()
+		internal void Initialize()
 		{
+			if (string.IsNullOrWhiteSpace(this.CacheName))
+				throw new CacheOptionsException(Invariant($"{nameof(this.CacheName)} cannot be null or white space."));
+			if (this.MaximumCacheSizeIndicator < 1)
+				throw new CacheOptionsException(Invariant($"{nameof(this.MaximumCacheSizeIndicator)} cannot be less than 1. CacheName: {this.CacheName}"));
+			if (this.CacheItemExpiry.TotalMilliseconds < 10)
+				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiry)} cannot be less than 10 ms. CacheName: {this.CacheName}"));
+			if (this.FlushInterval.TotalMilliseconds < 50)
+				throw new CacheOptionsException(Invariant($"{nameof(this.FlushInterval)} cannot be less than 50 ms. CacheName: {this.CacheName}"));
 			if (this.CacheItemExpiryPercentageRandomization < 0 || this.CacheItemExpiryPercentageRandomization > 100)
-				throw new CacheOptionsException(Invariant($"{nameof(CacheOptions)}.{nameof(this.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 100. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {this.CacheItemExpiryPercentageRandomization}."));
+				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 100. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {this.CacheItemExpiryPercentageRandomization}. CacheName: {this.CacheName}"));
 
+			CalculateCacheItemExpiryPercentageRandomizationMilliseconds();
+		}
+
+		private void CalculateCacheItemExpiryPercentageRandomizationMilliseconds()
+		{
 			double fraction = this.CacheItemExpiryPercentageRandomization / 100d;
 			double expiryAsMs = this.CacheItemExpiry.TotalMilliseconds;
 			double randomWindowMs = expiryAsMs * fraction;
