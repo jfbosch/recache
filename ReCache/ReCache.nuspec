@@ -11,9 +11,13 @@
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
 		<releaseNotes>
-You can now specify a name for the cache in the options.
-The name is used in any exceptions. This makes debugging much easier if loader funcs throw or circuit breaker exceptions happen and you have more than 1 cache in your project.
-The Self-refreshing Cache will now first refresh entries that were accessed more recently before refreshing older accessed entries. This means that the most relevant keys will remain in the cache if the Max Cache Size Indicator is exceeded. 
+
+Introduced item expiry randomization .
+The percentage of the expiry timespan to randomize, using the endpoint of the timespan as the midpoint of the randomization span. For example, if the CacheItemExpiry is 300 seconds, and the CacheItemExpiryPercentageRandomization is set to 10 (10%, which would be 30 seconds), then the item will be guaranteed to expire anywhere from second number 285 to second number 315. That is, the random expiry window is between 300 -5% and 300 +5%.  So it distributes the 10% to either side of the specified expiry time (15 seconds to either side).
+This allows the cache to distribute the cost of the reloading of expired items, in the case where many keys were loaded in close succession. The values 0 through 100 are supported. The default is 10.
+
+If there is a problem with the properties on the CacheOptions, a CacheOptionsException will be thrown now instead of a plain ArgumentException. CacheOptionsException still inherits from ArgumentException.
+
 		</releaseNotes>
 		<copyright>Copyright 2015</copyright>
 		<tags>Cache .net in-memory performance</tags>
