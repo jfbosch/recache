@@ -11,7 +11,9 @@
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
 		<releaseNotes>
+4.0.1 fixes the nuget package. 3.X and 4.0.0 did not properly include some referenced assemblies.
 
+4.0.0 changes listed again below for easy reference.
 Introduced item expiry randomization .
 The percentage of the expiry timespan to randomize, using the endpoint of the timespan as the midpoint of the randomization span. For example, if the CacheItemExpiry is 300 seconds, and the CacheItemExpiryPercentageRandomization is set to 10 (10%, which would be 30 seconds), then the item will be guaranteed to expire anywhere from second number 285 to second number 315. That is, the random expiry window is between 300 -5% and 300 +5%.  So it distributes the 10% to either side of the specified expiry time (15 seconds to either side).
 This allows the cache to distribute the cost of the reloading of expired items, in the case where many keys were loaded in close succession. The values 0 through 100 are supported. The default is 10.
