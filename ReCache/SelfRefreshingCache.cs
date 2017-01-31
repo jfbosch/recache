@@ -1,5 +1,4 @@
-﻿using ReCache.KeyValueStore;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +31,7 @@ namespace ReCache
 		private ICache<Tuple<TKey, int>, TValue> _generationCache;
 
 		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
-		private Action<TKey, CacheEntry<TValue>, int> _generationCacheMissedCallback;
+		private Action<TKey, CacheEntry<TValue>, long> _generationCacheMissedCallback;
 
 		public string CacheName => _generationCache.CacheName;
 
@@ -87,11 +86,10 @@ namespace ReCache
 
 		private async void RefreshCache(object sender, ElapsedEventArgs e)
 		{
+			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			try
 			{
 				_refresherTimer.Stop();
-
-				var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 				int nextGeneration = _currentGeneration + 1;
 				if (nextGeneration == int.MaxValue)
@@ -111,29 +109,38 @@ namespace ReCache
 
 				stopwatch.Stop();
 
-				if (this.RefreshCacheCallback != null)
-				{
-					var contexts = currentGenerationEntriesToRefresh.Select(x => x.Value.ClientContext).Distinct().ToList();
-					int elapsedMillisecondsPerContext = (int)stopwatch.ElapsedMilliseconds.SafeDivideBy(contexts.Count(), stopwatch.ElapsedMilliseconds);
-					contexts.ForEach(context => this.RefreshCacheCallback(_currentGeneration, elapsedMillisecondsPerContext, context));
-				}
+				TryRefreshCacheCallback(_currentGeneration, stopwatch.ElapsedMilliseconds);
 			}
 			catch (Exception ex)
 			{
+				stopwatch.Stop();
 				// If the refresh failed, we want to pass the info back to the app using the cache.
-				//BookMark??
-				// If the failed callback itself failes, we want to suppress the exception.
-				try
-				{
-					if (this.RefreshCacheFailedCallback != null)
-						this.RefreshCacheFailedCallback(0, 0, ex);
-				}
-				finally { }
+				TryRefreshCacheFailedCallback(stopwatch, ex);
 			}
 			finally
 			{
 				_refresherTimer.Start();
 			}
+		}
+
+		private void TryRefreshCacheFailedCallback(System.Diagnostics.Stopwatch stopwatch, Exception ex)
+		{
+			try
+			{
+				this.RefreshCacheFailedCallback?.Invoke(_currentGeneration, stopwatch.ElapsedMilliseconds, ex);
+			}
+			finally { } // suppress client code exceptions
+		}
+
+		private void TryRefreshCacheCallback(
+			int currentGeneration,
+			long elapsedMilliseconds)
+		{
+			try
+			{
+				this.RefreshCacheCallback?.Invoke(currentGeneration, elapsedMilliseconds);
+			}
+			finally { } // suppress client code exceptions
 		}
 
 		private async Task<IOrderedEnumerable<KeyValuePair<Tuple<TKey, int>, CacheEntry<TValue>>>> LoadNextGenerationAsync(int nextGeneration)
@@ -330,7 +337,7 @@ namespace ReCache
 			}
 		}
 
-		public Action<TKey, CacheEntry<TValue>, int> MissedCallback
+		public Action<TKey, CacheEntry<TValue>, long> MissedCallback
 		{
 			get
 			{
@@ -351,7 +358,7 @@ namespace ReCache
 			}
 		}
 
-		public Action<long, long, string, long> FlushCallback
+		public Action<int, int, long> FlushCallback
 		{
 			get
 			{
@@ -363,7 +370,7 @@ namespace ReCache
 			}
 		}
 
-		public Action<int, int, string> RefreshCacheCallback { get; set; }
-		public Action<int, int, Exception> RefreshCacheFailedCallback { get; set; }
+		public Action<int, long> RefreshCacheCallback { get; set; }
+		public Action<int, long, Exception> RefreshCacheFailedCallback { get; set; }
 	}
 }

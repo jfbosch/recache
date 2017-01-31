@@ -412,10 +412,9 @@ namespace Tests
 
 			_cache.MissedCallback = (key, cacheEntry, durationMilliseconds) =>
 			{
-				cacheEntry.ClientContext = ((key % 2) == 0) ? "evenContext" : "oddContext";
 			};
 
-			_cache.FlushCallback = (count, itemsRemoved, clientContext, millisecondElapsed) =>
+			_cache.FlushCallback = (count, itemsRemoved, millisecondElapsed) =>
 			{
 				//Console.WriteLine("flushCallBackRaised...count :{0}, itemsRemoved: {1}, clientContext : {2}, millisecondElapsed: {3} ", count, itemsRemoved, clientContext, millisecondElapsed);
 				Interlocked.Increment(ref flushCallbackRaised);
@@ -427,7 +426,7 @@ namespace Tests
 			_cache.Count.Should().Be(1000);
 			await Task.Delay(1500);
 			_cache.Count.Should().Be(0);
-			flushCallbackRaised.Should().BeGreaterOrEqualTo(5);
+			flushCallbackRaised.Should().BeGreaterOrEqualTo(4);
 		}
 
 		[TestMethod]

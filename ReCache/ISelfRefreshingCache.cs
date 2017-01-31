@@ -10,9 +10,14 @@ namespace ReCache
 		/// Parameters are:
 		/// CurrentGeneration
 		/// DurationMilliseconds
-		/// ClientContext
 		/// </summary>
-		Action<int, int, string> RefreshCacheCallback { get; set; }
-		Action<int, int, Exception> RefreshCacheFailedCallback { get; set; }
+		Action<int, long> RefreshCacheCallback { get; set; }
+		/// <summary>
+		/// Parameters are:
+		/// CurrentGeneration
+		/// DurationMilliseconds
+		/// The reason for the failure.
+		/// </summary>
+		Action<int, long, Exception> RefreshCacheFailedCallback { get; set; }
 	}
 }

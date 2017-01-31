@@ -183,8 +183,7 @@ namespace ReCache
 					if (resetExpiryTimeoutIfAlreadyCached)
 						entry.TimeLoaded = DateTime.UtcNow;
 
-					if (this.HitCallback != null)
-						this.HitCallback(key, entry);
+					TryHitCallback(key, entry);
 
 					return entry.CachedValue;
 				}
@@ -192,6 +191,15 @@ namespace ReCache
 
 			// not in cache at all.
 			return (await this.LoadAndCacheEntryAsync(key, loaderFunction).ConfigureAwait(false)).CachedValue;
+		}
+
+		private void TryHitCallback(TKey key, CacheEntry<TValue> entry)
+		{
+			try
+			{
+				this.HitCallback?.Invoke(key, entry);
+			}
+			finally { } // suppress client code exceptions
 		}
 
 		private DateTime CalculateExpiryTimeStartOffset()
@@ -231,8 +239,7 @@ namespace ReCache
 					return default(TValue);
 				}
 
-				if (this.HitCallback != null)
-					this.HitCallback(key, entry);
+				TryHitCallback(key, entry);
 
 				if (resetExpiryTimeoutIfAlreadyCached)
 					entry.TimeLoaded = DateTime.UtcNow; ;
@@ -258,8 +265,7 @@ namespace ReCache
 					return false;
 				}
 
-				if (this.HitCallback != null)
-					this.HitCallback(key, entry);
+				TryHitCallback(key, entry);
 
 				if (resetExpiryTimeoutIfAlreadyCached)
 					entry.TimeLoaded = DateTime.UtcNow; ;
@@ -287,10 +293,18 @@ namespace ReCache
 			_kvStore.AddOrUpdate(key, entry, (k, v) => entry);
 			stopwatch.Stop();
 
-			if (this.MissedCallback != null)
-				this.MissedCallback(key, entry, (int)stopwatch.ElapsedMilliseconds);
+			TryMissedCallback(key, entry, stopwatch.ElapsedMilliseconds);
 
 			return entry;
+		}
+
+		private void TryMissedCallback(TKey key, CacheEntry<TValue> entry, long elapsedMilliseconds)
+		{
+			try
+			{
+				this.MissedCallback?.Invoke(key, entry, elapsedMilliseconds);
+			}
+			finally { } // suppress client code exceptions
 		}
 
 		private KeyGate<TKey> GetKeyGate(TKey key)
@@ -370,28 +384,19 @@ namespace ReCache
 			}
 
 			stopwatch.Stop();
-			ExecuteFlushCallback(entriesBeforeFlush, remainingEntries, stopwatch.ElapsedMilliseconds);
+
+			int remainingCount = remainingEntries.Count();
+			int itemsFlushed = entriesBeforeFlush.Count() - remainingCount;
+			TryFlushCallback(remainingCount, itemsFlushed, stopwatch.ElapsedMilliseconds);
 		}
 
-		private void ExecuteFlushCallback(List<KeyValuePair<TKey, CacheEntry<TValue>>> entriesBeforeFlush, List<KeyValuePair<TKey, CacheEntry<TValue>>> remainingEntries, long elapsedMilliseconds)
+		private void TryFlushCallback(int remainingCount, int itemsFlushed, long elapsedMilliseconds)
 		{
-			if (FlushCallback != null)
+			try
 			{
-				var clientContexts = entriesBeforeFlush
-					.Union(remainingEntries)
-					.Select(entry => entry.Value.ClientContext)
-					.Distinct()
-					.ToList();
-
-				long elapsedMillisecondsPart = (long)elapsedMilliseconds.SafeDivideBy(clientContexts.Count, elapsedMilliseconds);
-				foreach (var clientContext in clientContexts)
-				{
-					var beforeFlushCount = entriesBeforeFlush.Count(entry => entry.Value.ClientContext == clientContext);
-					var remainingCount = remainingEntries.Count(entry => entry.Value.ClientContext == clientContext);
-					var itemsFlushed = beforeFlushCount - remainingCount;
-					FlushCallback(remainingCount, itemsFlushed, clientContext, elapsedMillisecondsPart);
-				}
+				FlushCallback?.Invoke(remainingCount, itemsFlushed, elapsedMilliseconds);
 			}
+			finally { } // suppress client code exceptions.
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -468,8 +473,17 @@ namespace ReCache
 
 		public Action<TKey, CacheEntry<TValue>> HitCallback { get; set; }
 
-		public Action<TKey, CacheEntry<TValue>, int> MissedCallback { get; set; }
+		/// <summary>
+		/// The long parameter is the duration in ms.
+		/// </summary>
+		public Action<TKey, CacheEntry<TValue>, long> MissedCallback { get; set; }
 
-		public Action<long, long, string, long> FlushCallback { get; set; }
+		/// <summary>
+		/// The 3 long parameters of the action are:
+		/// Remaining entry count.
+		/// Number of Items flushed.
+		/// Duration in ms the flush op took.
+		/// </summary>
+		public Action<int, int, long> FlushCallback { get; set; }
 	}
 }

@@ -44,8 +44,8 @@ namespace ReCache
 		Action<TKey, CacheEntry<TValue>> HitCallback { get; set; }
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
-		Action<TKey, CacheEntry<TValue>, int> MissedCallback { get; set; }
+		Action<TKey, CacheEntry<TValue>, long> MissedCallback { get; set; }
 
-		Action<long, long, string, long> FlushCallback { get; set; }
+		Action<int, int, long> FlushCallback { get; set; }
 	}
 }

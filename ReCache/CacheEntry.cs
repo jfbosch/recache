@@ -19,7 +19,5 @@ namespace ReCache
 		}
 		internal DateTime TimeLoaded { get; set; }
 		internal DateTime TimeLastAccessed { get; set; }
-
-		public string ClientContext;
 	}
 }
