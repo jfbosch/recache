@@ -20,9 +20,6 @@ namespace ReCache
 		internal DateTime TimeLoaded { get; set; }
 		internal DateTime TimeLastAccessed { get; set; }
 
-		/// <summary>
-		/// An arbitrary context (meta data) for use by the client of the cache.
-		/// </summary>
 		public string ClientContext;
 	}
 }

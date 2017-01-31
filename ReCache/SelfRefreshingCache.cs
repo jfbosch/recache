@@ -118,6 +118,18 @@ namespace ReCache
 					contexts.ForEach(context => this.RefreshCacheCallback(_currentGeneration, elapsedMillisecondsPerContext, context));
 				}
 			}
+			catch (Exception ex)
+			{
+				// If the refresh failed, we want to pass the info back to the app using the cache.
+				//BookMark??
+				// If the failed callback itself failes, we want to suppress the exception.
+				try
+				{
+					if (this.RefreshCacheFailedCallback != null)
+						this.RefreshCacheFailedCallback(0, 0, ex);
+				}
+				finally { }
+			}
 			finally
 			{
 				_refresherTimer.Start();
@@ -352,6 +364,6 @@ namespace ReCache
 		}
 
 		public Action<int, int, string> RefreshCacheCallback { get; set; }
-
+		public Action<int, int, Exception> RefreshCacheFailedCallback { get; set; }
 	}
 }

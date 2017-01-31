@@ -13,5 +13,6 @@ namespace ReCache
 		/// ClientContext
 		/// </summary>
 		Action<int, int, string> RefreshCacheCallback { get; set; }
+		Action<int, int, Exception> RefreshCacheFailedCallback { get; set; }
 	}
 }
