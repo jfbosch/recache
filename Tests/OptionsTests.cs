@@ -29,7 +29,7 @@ namespace Tests
 			{
 				CacheItemExpiry = span,
 			};
-			op.Initialize();
+			op.Initialize(nameof(OptionsTests));
 			return op.CacheItemExpiryPercentageRandomizationMilliseconds;
 		}
 
@@ -56,7 +56,7 @@ namespace Tests
 				CacheItemExpiry = span,
 				CacheItemExpiryPercentageRandomization = percentage,
 			};
-			op.Initialize();
+			op.Initialize(nameof(WithSpecific));
 			return op.CacheItemExpiryPercentageRandomizationMilliseconds;
 		}
 

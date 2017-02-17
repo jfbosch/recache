@@ -17,10 +17,11 @@ namespace ReCache
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{
+		private string _cacheName = "(NotSet)";
 		private Random _expiryRandomizer = new Random();
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
-		public string CacheName => this._options.CacheName;
+		public string CacheName => this._cacheName;
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
 		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
@@ -40,16 +41,18 @@ namespace ReCache
 		public IEnumerable<KeyValuePair<TKey, TValue>> Items { get { return _kvStore.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value.CachedValue)); } }
 
 		public Cache(
+			string cacheName,
 			CacheOptions options)
-			: this(options, null)
+			: this(cacheName, options, null)
 		{
 		}
 
 		public Cache(
+			string cacheName,
 			CacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
-			this.SetOptions(options);
+			this.SetOptions(cacheName, options);
 
 			LoaderFunction = loaderFunction;
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
@@ -58,17 +61,19 @@ namespace ReCache
 		}
 
 		public Cache(
+			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options)
-			: this(comparer, options, null)
+			: this(cacheName, comparer, options, null)
 		{
 		}
 
 		public Cache(
+			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
-			: this(options, loaderFunction)
+			: this(cacheName, options, loaderFunction)
 		{
 			if (comparer == null)
 				throw new ArgumentNullException(nameof(comparer));
@@ -106,12 +111,17 @@ namespace ReCache
 			}
 		}
 
-		private void SetOptions(CacheOptions options)
+		private void SetOptions(string cacheName, CacheOptions options)
 		{
+			if (cacheName == null)
+				throw new ArgumentNullException(nameof(cacheName));
+			if (cacheName.Trim() == string.Empty)
+				throw new ArgumentException(nameof(cacheName) + " may not be blank or white space");
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 
-			options.Initialize();
+			_cacheName = cacheName;
+			options.Initialize(_cacheName);
 			_options = options;
 		}
 

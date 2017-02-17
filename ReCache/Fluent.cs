@@ -10,7 +10,7 @@ namespace ReCache
 			this CacheBuilder<TKey, TValue> builder,
 			string name)
 		{
-			builder.CacheOptions.CacheName = name;
+			builder.CacheName = name;
 			return builder;
 		}
 
@@ -150,7 +150,7 @@ namespace ReCache
 			if (builder == null)
 				throw new ArgumentNullException(nameof(builder));
 
-			var cache = new Cache<TKey, TValue>(builder.CacheOptions);
+			var cache = new Cache<TKey, TValue>(builder.CacheName, builder.CacheOptions);
 			cache.LoaderFunction = builder.LoaderFunc;
 			return cache;
 		}

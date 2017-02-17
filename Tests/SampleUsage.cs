@@ -26,13 +26,13 @@ namespace Tests
 
 			var cacheOptions = new CacheOptions
 			{
-				CacheName = nameof(Sample1),
 				CacheItemExpiry = TimeSpan.FromSeconds(1),
 				CacheItemExpiryPercentageRandomization = 0,
 				FlushInterval = TimeSpan.FromSeconds(5),
 				MaximumCacheSizeIndicator = 100
 			};
 			var cache = new Cache<int, string>(
+				nameof(Sample1),
 				cacheOptions, loaderFunction);
 
 			// Record the first hit values for 100 keys

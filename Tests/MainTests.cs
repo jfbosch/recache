@@ -41,6 +41,7 @@ namespace Tests
 			};
 
 			var _cache = new Cache<string, int>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -74,6 +75,7 @@ namespace Tests
 			};
 
 			var _cache = new Cache<IEnumerable<string>, int>(
+				"MyCache",
 				new EnumerableStringComparer(),
 				new CacheOptions
 				{
@@ -94,6 +96,7 @@ namespace Tests
 		public async Task StaleEntriesShouldBeAutoFlushed()
 		{
 			var _cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -115,6 +118,7 @@ namespace Tests
 		public async Task EntriesShouldNotBeFlushedIfExtendWasUsed()
 		{
 			var _cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromSeconds(1),
@@ -138,6 +142,7 @@ namespace Tests
 		public async Task StaleEntriesShouldNotBeFlushedIfFlushIntervalIsNotReached()
 		{
 			var _cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromMilliseconds(10),
@@ -207,6 +212,7 @@ namespace Tests
 			var random = new Random();
 			int numberOfLoaderCalls = await Task.FromResult(0);
 			var cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.MaxValue,
@@ -266,6 +272,7 @@ namespace Tests
 			int numberOfLoaderCalls = await Task.FromResult(0);
 
 			using (var cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = timeout,
@@ -379,6 +386,7 @@ namespace Tests
 		public async Task EntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
 		{
 			var cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromMinutes(1),
@@ -399,9 +407,9 @@ namespace Tests
 		public async Task TestCacheFlushCallback()
 		{
 			var _cache = new Cache<int, string>(
+				nameof(TestCacheFlushCallback),
 				new CacheOptions
 				{
-					CacheName = nameof(TestCacheFlushCallback),
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
 					FlushInterval = TimeSpan.FromMilliseconds(500),
 					MaximumCacheSizeIndicator = 1000
@@ -433,6 +441,7 @@ namespace Tests
 		public async Task SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedOnRefreshEvenIfNotStale()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
+				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(600),
@@ -458,6 +467,7 @@ namespace Tests
 		{
 			int refreshMs = 50;
 			var _cache = new SelfRefreshingCache<int, string>(
+				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(refreshMs),
@@ -494,6 +504,7 @@ namespace Tests
 		public async Task TryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -515,6 +526,7 @@ namespace Tests
 		public async Task ItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new Cache<int, string>(
+				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -540,6 +552,7 @@ namespace Tests
 		public async Task SelfRefreshingCacheEntriesTryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
+				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(5),
@@ -566,6 +579,7 @@ namespace Tests
 		public async Task SelfRefreshingCacheItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
+				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(50),

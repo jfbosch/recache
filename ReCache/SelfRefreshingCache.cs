@@ -51,15 +51,20 @@ namespace ReCache
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
 		public SelfRefreshingCache(
+			string cacheName,
 			SelfRefreshingCacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
+			if (cacheName == null)
+				throw new ArgumentNullException(nameof(cacheName));
+			if (cacheName.Trim() == string.Empty)
+				throw new ArgumentException(nameof(cacheName) + " may not be blank or white space");
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 			if ((options.RefreshInterval.TotalMilliseconds / options.StandardCacheOptions.CacheItemExpiry.TotalMilliseconds * 100) > 50)
-				throw new ArgumentException("The RefreshInterval may at most be 50% of the length of the CacheItemExpiry to allow for ample reload time, else the cache will experience unnecessary, possibly concurrent, misses. Either decrease the refresh interval, or increase the expiry timeout. CacheName: " + options.StandardCacheOptions.CacheName);
+				throw new ArgumentException("The RefreshInterval may at most be 50% of the length of the CacheItemExpiry to allow for ample reload time, else the cache will experience unnecessary, possibly concurrent, misses. Either decrease the refresh interval, or increase the expiry timeout. CacheName: " + cacheName);
 			if (loaderFunction == null)
-				throw new ArgumentNullException(nameof(loaderFunction) + ";  CacheName: " + options.StandardCacheOptions.CacheName);
+				throw new ArgumentNullException(nameof(loaderFunction) + ";  CacheName: " + cacheName);
 
 			_options = options;
 
@@ -71,6 +76,7 @@ namespace ReCache
 			};
 
 			_generationCache = new Cache<Tuple<TKey, int>, TValue>(
+				cacheName,
 				new TupleComparer<TKey, int>(),
 				options.StandardCacheOptions,
 				versionLoderFunction);
