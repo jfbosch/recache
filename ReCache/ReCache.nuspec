@@ -12,16 +12,7 @@
 		<description>$description$</description>
 		<releaseNotes>
 
-			Added a RefreshCacheFailedCallback to the SelfRefreshingCache.
-
-			Improved the signature of most of the callbacks to correct data types.
-
-			Improved logic of all callbacks.
-
-			Made all callbacks failsafe. I.e. if the action that the client code registered as a callback throws an exception, the exception will be suppressed and therefore won't break the cache.
-
-			Removed the CacheEntry.ClientContext property. It was a vestige from an old idea that wasn't being used.
-
+			Removed CacheName from the options object and added it to all constructors.
 
 
 		</releaseNotes>
