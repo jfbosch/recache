@@ -337,6 +337,54 @@ namespace Tests
 		}
 
 		[TestMethod]
+		public async Task SecondColdHitOnSameKeyShouldBubbleLoaderExceptionAfterFirstLoaderFailure()
+		{
+			// We are basically testing that that the second call to the same key also bubbles the loader func's
+			// exception if the first hit on the key also got a loader func exception. We don't the second hit
+			// to show up as a circuite breaker exception.
+
+			int numberOfLoaderCallInitiations = await Task.FromResult(0);
+
+			using (var cache = new Cache<int, string>(
+				"MyCache",
+				new CacheOptions
+				{
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(100),
+					CacheItemExpiry = TimeSpan.FromSeconds(120),
+					FlushInterval = TimeSpan.FromSeconds(5),
+					MaximumCacheSizeIndicator = 1000
+				},
+				async (key) =>
+				{
+					Interlocked.Increment(ref numberOfLoaderCallInitiations);
+					await Task.Delay(150).ConfigureAwait(false);
+					throw new Exception("Loader Func Failure");
+				}))
+			{
+				int testKey = 7;
+
+				var t1 = cache.GetOrLoadAsync(testKey);
+				await Task.Delay(80);
+				var t2 = cache.GetOrLoadAsync(testKey);
+
+				bool hitFuncException = false;
+				try
+				{
+					await t2.ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					if (ex.Message == "Loader Func Failure")
+						hitFuncException = true;
+				}
+				hitFuncException.Should().BeTrue();
+
+				numberOfLoaderCallInitiations.Should().Be(2);
+			}
+		}
+
+
+		[TestMethod]
 		public async Task ShouldNotDeadlock_Loop()
 		{
 			for (int i = 0; i < 150; i++)
@@ -353,7 +401,6 @@ namespace Tests
 			Func<int, Task<string>> loaderFunc = async (key) =>
 			{
 				Interlocked.Increment(ref numberOfLoaderCallInitiations);
-				//Thread.Sleep(random.Next(30, 50));
 				await Task.Delay(random.Next(30, 50)).ConfigureAwait(false);
 				Interlocked.Increment(ref numberOfLoaderCalls);
 				return await Task.FromResult(key.ToString()).ConfigureAwait(false);
@@ -362,9 +409,6 @@ namespace Tests
 			Func<int, Task<string>> cacheFunc = async (key) =>
 			{
 				await Task.FromResult(0);
-				//Does not deadlock
-				//return loaderFunc(key).Result;
-				//Deadlocks
 				return await loaderFunc(key).ConfigureAwait(false);
 			};
 
