@@ -154,7 +154,7 @@ namespace ReCache
 			if (this.TryGet(key, resetExpiryTimeoutIfAlreadyCached, out v))
 				return v;
 
-			var keyGate = this.GetKeyGate(key);
+			var keyGate = this.EnsureKeyGate(key);
 			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
 			if (!gotKeyLockBeforeTimeout)
 			{
@@ -317,7 +317,7 @@ namespace ReCache
 			finally { } // suppress client code exceptions
 		}
 
-		private KeyGate<TKey> GetKeyGate(TKey key)
+		private KeyGate<TKey> EnsureKeyGate(TKey key)
 		{
 			//TODO: make lazy.
 			var tempKeyGate = new KeyGate<TKey>(key);
