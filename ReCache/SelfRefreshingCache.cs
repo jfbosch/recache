@@ -33,7 +33,11 @@ namespace ReCache
 		private Action<TKey, CacheEntry<TValue>> _generationCacheHitCallback;
 		private Action<TKey, CacheEntry<TValue>, long> _generationCacheMissedCallback;
 
-		public string CacheName => _generationCache.CacheName;
+		public string CacheName
+		{
+			get { return _generationCache.CacheName; }
+			set { _generationCache.CacheName = value; }
+		}
 
 		/// <summary>
 		/// The function to use for retreaving the entry if it is not yet in the cache.

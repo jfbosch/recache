@@ -330,6 +330,56 @@ namespace Tests
 		}
 
 		[TestMethod]
+		public async Task SecondColdHitOnSameKeyShouldBubbleLoaderExceptionAfterFirstLoaderFailure()
+		{
+			// We are basically testing that that the second call to the same key also bubbles the loader func's
+			// exception if the first hit on the key also got a loader func exception. We don't the second hit
+			// to show up as a circuite breaker exception.
+
+			int numberOfLoaderCallInitiations = await Task.FromResult(0);
+
+			using (var cache = new Cache<int, string>(
+				new CacheOptions
+				{
+					CacheName = "MyCache",
+					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(100),
+					CacheItemExpiry = TimeSpan.FromSeconds(120),
+					FlushInterval = TimeSpan.FromSeconds(5),
+					MaximumCacheSizeIndicator = 1000
+				},
+				async (key) =>
+				{
+					Interlocked.Increment(ref numberOfLoaderCallInitiations);
+					await Task.Delay(150).ConfigureAwait(false);
+					throw new Exception("Loader Func Failure");
+				}))
+			{
+				cache.CacheName = "NewCacheName";
+				int testKey = 7;
+
+				var t1 = cache.GetOrLoadAsync(testKey);
+				await Task.Delay(80);
+				var t2 = cache.GetOrLoadAsync(testKey);
+
+				bool hitFuncException = false;
+				try
+				{
+					await t2.ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					if (ex.Message == "Loader Func Failure")
+						hitFuncException = true;
+				}
+				hitFuncException.Should().BeTrue();
+
+				numberOfLoaderCallInitiations.Should().Be(2);
+			}
+		}
+
+
+
+		[TestMethod]
 		public async Task ShouldNotDeadlock_Loop()
 		{
 			for (int i = 0; i < 150; i++)

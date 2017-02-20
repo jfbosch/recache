@@ -20,7 +20,15 @@ namespace ReCache
 		private Random _expiryRandomizer = new Random();
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
-		public string CacheName => this._options.CacheName;
+		public string CacheName
+		{
+			get { return this._options.CacheName; }
+			set
+			{
+				if (this._options != null)
+					this._options.CacheName = value;
+			}
+		}
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
 		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
@@ -144,7 +152,7 @@ namespace ReCache
 			if (this.TryGet(key, resetExpiryTimeoutIfAlreadyCached, out v))
 				return v;
 
-			var keyGate = this.GetKeyGate(key);
+			var keyGate = this.EnsureKeyGate(key);
 			bool gotKeyLockBeforeTimeout = await keyGate.Lock.WaitAsync(_options.CircuitBreakerTimeoutForAdditionalThreadsPerKey).ConfigureAwait(false);
 			if (!gotKeyLockBeforeTimeout)
 			{
@@ -307,7 +315,7 @@ namespace ReCache
 			finally { } // suppress client code exceptions
 		}
 
-		private KeyGate<TKey> GetKeyGate(TKey key)
+		private KeyGate<TKey> EnsureKeyGate(TKey key)
 		{
 			//TODO: make lazy.
 			var tempKeyGate = new KeyGate<TKey>(key);
