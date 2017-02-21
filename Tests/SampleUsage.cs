@@ -32,7 +32,6 @@ namespace Tests
 				MaximumCacheSizeIndicator = 100
 			};
 			var cache = new Cache<int, string>(
-				nameof(Sample1),
 				cacheOptions, loaderFunction);
 
 			// Record the first hit values for 100 keys

@@ -12,7 +12,9 @@
 		<description>$description$</description>
 		<releaseNotes>
 
-			Removed CacheName from the options object and added it to all constructors.
+		Reverted back to v5 compatibility.
+		Cache name is again taken in on options object instead of in constructor.
+		It is possible to set the ICache.CacheName now after construction.
 
 
 		</releaseNotes>

@@ -41,7 +41,6 @@ namespace Tests
 			};
 
 			var _cache = new Cache<string, int>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -75,7 +74,6 @@ namespace Tests
 			};
 
 			var _cache = new Cache<IEnumerable<string>, int>(
-				"MyCache",
 				new EnumerableStringComparer(),
 				new CacheOptions
 				{
@@ -96,7 +94,6 @@ namespace Tests
 		public async Task StaleEntriesShouldBeAutoFlushed()
 		{
 			var _cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -118,7 +115,6 @@ namespace Tests
 		public async Task EntriesShouldNotBeFlushedIfExtendWasUsed()
 		{
 			var _cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromSeconds(1),
@@ -142,7 +138,6 @@ namespace Tests
 		public async Task StaleEntriesShouldNotBeFlushedIfFlushIntervalIsNotReached()
 		{
 			var _cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromMilliseconds(10),
@@ -212,7 +207,6 @@ namespace Tests
 			var random = new Random();
 			int numberOfLoaderCalls = await Task.FromResult(0);
 			var cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.MaxValue,
@@ -272,7 +266,6 @@ namespace Tests
 			int numberOfLoaderCalls = await Task.FromResult(0);
 
 			using (var cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = timeout,
@@ -339,16 +332,16 @@ namespace Tests
 		[TestMethod]
 		public async Task SecondColdHitOnSameKeyShouldBubbleLoaderExceptionAfterFirstLoaderFailure()
 		{
-			// We are basically testing that that the second call to the same key also bubbles the loader func's
-			// exception if the first hit on the key also got a loader func exception. We don't the second hit
-			// to show up as a circuite breaker exception.
+			// We are basically testing that the second call to the same key also bubbles the loader func's
+			// exception if the first hit on the key also got a loader func exception. We do not want the
+			// second hit to show up as a circuite breaker exception.
 
 			int numberOfLoaderCallInitiations = await Task.FromResult(0);
 
 			using (var cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
+					CacheName = "MyCache",
 					CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(100),
 					CacheItemExpiry = TimeSpan.FromSeconds(120),
 					FlushInterval = TimeSpan.FromSeconds(5),
@@ -361,6 +354,7 @@ namespace Tests
 					throw new Exception("Loader Func Failure");
 				}))
 			{
+				cache.CacheName = "NewCacheName";
 				int testKey = 7;
 
 				var t1 = cache.GetOrLoadAsync(testKey);
@@ -384,6 +378,7 @@ namespace Tests
 		}
 
 
+
 		[TestMethod]
 		public async Task ShouldNotDeadlock_Loop()
 		{
@@ -401,6 +396,7 @@ namespace Tests
 			Func<int, Task<string>> loaderFunc = async (key) =>
 			{
 				Interlocked.Increment(ref numberOfLoaderCallInitiations);
+				//Thread.Sleep(random.Next(30, 50));
 				await Task.Delay(random.Next(30, 50)).ConfigureAwait(false);
 				Interlocked.Increment(ref numberOfLoaderCalls);
 				return await Task.FromResult(key.ToString()).ConfigureAwait(false);
@@ -409,6 +405,9 @@ namespace Tests
 			Func<int, Task<string>> cacheFunc = async (key) =>
 			{
 				await Task.FromResult(0);
+				//Does not deadlock
+				//return loaderFunc(key).Result;
+				//Deadlocks
 				return await loaderFunc(key).ConfigureAwait(false);
 			};
 
@@ -430,7 +429,6 @@ namespace Tests
 		public async Task EntriesExceedingMaxShouldBeAutoFlushedEvenIfNotStale()
 		{
 			var cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromMinutes(1),
@@ -451,9 +449,9 @@ namespace Tests
 		public async Task TestCacheFlushCallback()
 		{
 			var _cache = new Cache<int, string>(
-				nameof(TestCacheFlushCallback),
 				new CacheOptions
 				{
+					CacheName = nameof(TestCacheFlushCallback),
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
 					FlushInterval = TimeSpan.FromMilliseconds(500),
 					MaximumCacheSizeIndicator = 1000
@@ -485,7 +483,6 @@ namespace Tests
 		public async Task SelfRefreshingCacheEntriesExceedingMaxShouldBeAutoFlushedOnRefreshEvenIfNotStale()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
-				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(600),
@@ -511,7 +508,6 @@ namespace Tests
 		{
 			int refreshMs = 50;
 			var _cache = new SelfRefreshingCache<int, string>(
-				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(refreshMs),
@@ -548,7 +544,6 @@ namespace Tests
 		public async Task TryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -570,7 +565,6 @@ namespace Tests
 		public async Task ItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new Cache<int, string>(
-				"MyCache",
 				new CacheOptions
 				{
 					CacheItemExpiry = TimeSpan.FromSeconds(1),
@@ -596,7 +590,6 @@ namespace Tests
 		public async Task SelfRefreshingCacheEntriesTryAddToCacheShouldIncreaseItemsInList()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
-				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(5),
@@ -609,7 +602,8 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
+			for (int i = 0; i < 5; i++)
+				_cache.GetOrLoadAsync(i).Wait();
 
 			_cache.Count.Should().Be(5);
 
@@ -623,7 +617,6 @@ namespace Tests
 		public async Task SelfRefreshingCacheItemsPropertyShouldReturnListOfItemsInCache()
 		{
 			var _cache = new SelfRefreshingCache<int, string>(
-				"MyCache",
 				new SelfRefreshingCacheOptions
 				{
 					RefreshInterval = TimeSpan.FromMilliseconds(50),

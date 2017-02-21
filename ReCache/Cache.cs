@@ -122,14 +122,12 @@ namespace ReCache
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 
-			string cacheName = options.CacheName;
+			_cacheName = options.CacheName;
 
-			if (cacheName == null)
-				throw new ArgumentNullException(nameof(cacheName));
-			if (cacheName.Trim() == string.Empty)
-				throw new ArgumentException(nameof(cacheName) + " may not be blank or white space");
-			if (options == null)
-				throw new ArgumentNullException(nameof(options));
+			if (_cacheName == null)
+				throw new ArgumentNullException(nameof(options.CacheName));
+			if (_cacheName.Trim() == string.Empty)
+				throw new ArgumentException(nameof(options.CacheName) + " may not be blank or white space");
 
 			options.Initialize();
 			_options = options;

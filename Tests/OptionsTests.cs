@@ -27,9 +27,10 @@ namespace Tests
 		{
 			var op = new CacheOptions
 			{
+				CacheName = nameof(OptionsTests),
 				CacheItemExpiry = span,
 			};
-			op.Initialize(nameof(OptionsTests));
+			op.Initialize();
 			return op.CacheItemExpiryPercentageRandomizationMilliseconds;
 		}
 
@@ -53,10 +54,11 @@ namespace Tests
 		{
 			var op = new CacheOptions
 			{
+				CacheName = nameof(WithSpecific),
 				CacheItemExpiry = span,
 				CacheItemExpiryPercentageRandomization = percentage,
 			};
-			op.Initialize(nameof(WithSpecific));
+			op.Initialize();
 			return op.CacheItemExpiryPercentageRandomizationMilliseconds;
 		}
 
