@@ -13,6 +13,7 @@ namespace ReCache
 
 	public class CacheBuilder<TKey, TValue>
 	{
+		internal string CacheName { get; set; }
 		internal CacheOptions CacheOptions { get; set; }
 		internal Func<TKey, Task<TValue>> LoaderFunc { get; set; }
 

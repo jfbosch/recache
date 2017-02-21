@@ -8,8 +8,6 @@ namespace ReCache
 {
 	public class CacheOptions
 	{
-		public string CacheName { get; set; }
-
 		/// <summary>
 		/// This option determines how the cache behaves when new requests come in on threads for a key that is already being fetched by the loader func.
 		/// When specified, an exception is thrown on the secondary threads requesting the same key when the wait period times out, letting the client deal with the fact that the cache is not yet warm.
@@ -81,7 +79,6 @@ namespace ReCache
 		public CacheOptions()
 		{
 			// Set some logical defaults.
-			this.CacheName = "(NotSet)";
 			this.MaximumCacheSizeIndicator = 10000;
 			this.CacheItemExpiry = TimeSpan.FromSeconds(60);
 			this.CacheItemExpiryPercentageRandomization = 10;
@@ -90,16 +87,16 @@ namespace ReCache
 			this.CircuitBreakerTimeoutForAdditionalThreadsPerKey = TimeSpan.FromMilliseconds(2000);
 		}
 
-		internal void Initialize()
+		internal void Initialize(string cacheName)
 		{
 			if (this.MaximumCacheSizeIndicator < 1)
-				throw new CacheOptionsException(Invariant($"{nameof(this.MaximumCacheSizeIndicator)} cannot be less than 1. CacheName: {CacheName}"));
+				throw new CacheOptionsException(Invariant($"{nameof(this.MaximumCacheSizeIndicator)} cannot be less than 1. CacheName: {cacheName}"));
 			if (this.CacheItemExpiry.TotalMilliseconds < 10)
-				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiry)} cannot be less than 10 ms. CacheName: {CacheName}"));
+				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiry)} cannot be less than 10 ms. CacheName: {cacheName}"));
 			if (this.FlushInterval.TotalMilliseconds < 50)
-				throw new CacheOptionsException(Invariant($"{nameof(this.FlushInterval)} cannot be less than 50 ms. CacheName: {CacheName}"));
+				throw new CacheOptionsException(Invariant($"{nameof(this.FlushInterval)} cannot be less than 50 ms. CacheName: {cacheName}"));
 			if (this.CacheItemExpiryPercentageRandomization < 0 || this.CacheItemExpiryPercentageRandomization > 100)
-				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 100. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {this.CacheItemExpiryPercentageRandomization}. CacheName: {CacheName}"));
+				throw new CacheOptionsException(Invariant($"{nameof(this.CacheItemExpiryPercentageRandomization)} must be set to a value between 0 and 100. 0 means no randomization. The default is 10. It is currently set to the unsupported value of {this.CacheItemExpiryPercentageRandomization}. CacheName: {cacheName}"));
 
 			CalculateCacheItemExpiryPercentageRandomizationMilliseconds();
 		}

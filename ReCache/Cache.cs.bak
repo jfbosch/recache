@@ -21,17 +21,7 @@ namespace ReCache
 		private Random _expiryRandomizer = new Random();
 		private bool _isDisposed = false;
 		private readonly object _disposeLock = new object();
-		public string CacheName
-		{
-			get { return this._cacheName; }
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException(nameof(value) + " may not be null when setting CacheName");
-
-				this._cacheName = value;
-			}
-		}
+		public string CacheName => this._cacheName;
 
 		private readonly ConcurrentDictionary<TKey, KeyGate<TKey>> _keyGates;
 		private readonly IKeyValueStore<TKey, CacheEntry<TValue>> _kvStore;
@@ -51,16 +41,18 @@ namespace ReCache
 		public IEnumerable<KeyValuePair<TKey, TValue>> Items { get { return _kvStore.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value.CachedValue)); } }
 
 		public Cache(
+			string cacheName,
 			CacheOptions options)
-			: this(options, null)
+			: this(cacheName, options, null)
 		{
 		}
 
 		public Cache(
+			string cacheName,
 			CacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
 		{
-			this.SetOptions(options);
+			this.SetOptions(cacheName, options);
 
 			LoaderFunction = loaderFunction;
 			_keyGates = new ConcurrentDictionary<TKey, KeyGate<TKey>>();
@@ -69,17 +61,19 @@ namespace ReCache
 		}
 
 		public Cache(
+			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options)
-			: this(comparer, options, null)
+			: this(cacheName, comparer, options, null)
 		{
 		}
 
 		public Cache(
+			string cacheName,
 			IEqualityComparer<TKey> comparer,
 			CacheOptions options,
 			Func<TKey, Task<TValue>> loaderFunction)
-			: this(options, loaderFunction)
+			: this(cacheName, options, loaderFunction)
 		{
 			if (comparer == null)
 				throw new ArgumentNullException(nameof(comparer));
@@ -117,13 +111,8 @@ namespace ReCache
 			}
 		}
 
-		private void SetOptions(CacheOptions options)
+		private void SetOptions(string cacheName, CacheOptions options)
 		{
-			if (options == null)
-				throw new ArgumentNullException(nameof(options));
-
-			string cacheName = options.CacheName;
-
 			if (cacheName == null)
 				throw new ArgumentNullException(nameof(cacheName));
 			if (cacheName.Trim() == string.Empty)
@@ -131,7 +120,8 @@ namespace ReCache
 			if (options == null)
 				throw new ArgumentNullException(nameof(options));
 
-			options.Initialize();
+			_cacheName = cacheName;
+			options.Initialize(_cacheName);
 			_options = options;
 		}
 
