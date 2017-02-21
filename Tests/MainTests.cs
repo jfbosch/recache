@@ -332,9 +332,9 @@ namespace Tests
 		[TestMethod]
 		public async Task SecondColdHitOnSameKeyShouldBubbleLoaderExceptionAfterFirstLoaderFailure()
 		{
-			// We are basically testing that that the second call to the same key also bubbles the loader func's
-			// exception if the first hit on the key also got a loader func exception. We don't the second hit
-			// to show up as a circuite breaker exception.
+			// We are basically testing that the second call to the same key also bubbles the loader func's
+			// exception if the first hit on the key also got a loader func exception. We do not want the
+			// second hit to show up as a circuite breaker exception.
 
 			int numberOfLoaderCallInitiations = await Task.FromResult(0);
 
@@ -602,7 +602,8 @@ namespace Tests
 				},
 				IntLoaderFunc);
 
-			Parallel.For(0, 5, async (i) => await _cache.GetOrLoadAsync(i));
+			for (int i = 0; i < 5; i++)
+				_cache.GetOrLoadAsync(i).Wait();
 
 			_cache.Count.Should().Be(5);
 
