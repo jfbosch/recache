@@ -5,7 +5,7 @@ There are lots of caching options out there, but if you need something really si
 
 Why?
 ====
-Because sometimes an in-memory cache is really the bettor option over an out-of-process, external cache service such as redis, memcached, and the like.
+Because sometimes an in-memory cache is really the better option over an out-of-process, external cache service such as redis, memcached, and the like.
 
 The skinny on Features
 ========
