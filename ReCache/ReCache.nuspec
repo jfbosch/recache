@@ -12,10 +12,7 @@
 		<description>$description$</description>
 		<releaseNotes>
 
-		Reverted back to v5 compatibility.
-		Cache name is again taken in on options object instead of in constructor.
-		It is possible to set the ICache.CacheName now after construction.
-
+Fix a bug that occasionally threw "'maxValue' must be greater than zero." from within the CalculateExpiryTimeStartOffset method.
 
 		</releaseNotes>
 		<copyright>Copyright 2015</copyright>
