@@ -232,7 +232,12 @@ namespace ReCache
 				double halfRandomizationWindowMs = randomizationWindowMs / 2d;
 				// Deduct half of the randomization milliseconds based on the provided percentage.
 				ms -= halfRandomizationWindowMs;
-				ms += _expiryRandomizer.Next(randomizationWindowMs + 1);
+
+				int maxValue = randomizationWindowMs + 1;
+				if (maxValue <= 0)
+					maxValue = 1;
+				ms += _expiryRandomizer.Next(maxValue);
+
 				someTimeAgo = DateTime.UtcNow.AddMilliseconds(-ms);
 			}
 			return someTimeAgo;

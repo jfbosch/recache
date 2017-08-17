@@ -26,5 +26,5 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Tests")]
 
-[assembly: AssemblyVersion("7.0.0")]
-[assembly: AssemblyFileVersion("7.0.0.0")]
+[assembly: AssemblyVersion("7.0.1")]
+[assembly: AssemblyFileVersion("7.0.1.0")]
