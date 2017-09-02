@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCache", "ReCache\ReCache.csproj", "{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReCache", "ReCache\ReCache.csproj", "{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{D61D9B46-EE12-4DA4-9221-F2B17016C386}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{D61D9B46-EE12-4DA4-9221-F2B17016C386}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{27E69F86-56B4-4C90-AF0E-B5FEFB1862D4}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,9 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{27E69F
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCache.KeyValueStore", "ReCache.KeyValueStore\ReCache.KeyValueStore.csproj", "{243DD9C8-1B6C-4A45-A3D1-540CEF15178B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReCache.KeyValueStore", "ReCache.KeyValueStore\ReCache.KeyValueStore.csproj", "{243DD9C8-1B6C-4A45-A3D1-540CEF15178B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReCache.KeyValueStore.Redis", "ReCache.KeyValueStore.Redis\ReCache.KeyValueStore.Redis.csproj", "{67C5FF93-E233-44A4-883A-077CF42DC62E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReCache.KeyValueStore.Redis", "ReCache.KeyValueStore.Redis\ReCache.KeyValueStore.Redis.csproj", "{67C5FF93-E233-44A4-883A-077CF42DC62E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,12 +28,12 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|x64.ActiveCfg = Debug|x64
-		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|x64.Build.0 = Debug|x64
+		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Debug|x64.Build.0 = Debug|Any CPU
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|x64.ActiveCfg = Release|x64
-		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|x64.Build.0 = Release|x64
+		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{3494E13A-9068-4BD8-9E82-8063F9E2A3F2}.Release|x64.Build.0 = Release|Any CPU
 		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D61D9B46-EE12-4DA4-9221-F2B17016C386}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -59,5 +59,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {21133F40-EDCB-49F9-BBEE-24E142FEB966}
 	EndGlobalSection
 EndGlobal

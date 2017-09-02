@@ -1,6 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +7,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ReCache</RootNamespace>
     <AssemblyName>ReCache</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFramework>net462</TargetFramework>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -63,26 +61,6 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CacheOptionsException.cs" />
-    <Compile Include="CircuitBreakerTimeoutException.cs" />
-    <Compile Include="ExtensionMethods.cs" />
-    <Compile Include="Fluent.cs" />
-    <Compile Include="CacheBuilder.cs" />
-    <Compile Include="ICache.cs" />
-    <Compile Include="InMemoryKeyValueStore.cs" />
-    <Compile Include="ISelfRefreshingCache.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="SelfRefreshingCacheOptions.cs" />
-    <Compile Include="SelfRefreshingCache.cs" />
-    <Compile Include="Cache.cs" />
-    <Compile Include="CacheOptions.cs" />
-    <Compile Include="CacheEntry.cs" />
-    <Compile Include="TupleComparer.cs" />
-    <Compile Include="EnumerableStringComparer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="KeyGate.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ReCache.nuspec" />
   </ItemGroup>
   <ItemGroup>
@@ -94,7 +72,6 @@
       <Name>ReCache.KeyValueStore</Name>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
