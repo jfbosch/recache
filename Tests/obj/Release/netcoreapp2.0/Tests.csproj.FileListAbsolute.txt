@@ -1,0 +1,16 @@
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Tests.deps.json
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Tests.runtimeconfig.json
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Tests.runtimeconfig.dev.json
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Tests.dll
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\Tests.pdb
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\ReCache.dll
+C:\Code\recache\Tests\bin\Release\netcoreapp2.0\ReCache.pdb
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.csprojResolveAssemblyReference.cache
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.csproj.CoreCompileInputs.cache
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.AssemblyInfoInputs.cache
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.AssemblyInfo.cs
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.dll
+C:\Code\recache\Tests\obj\Release\netcoreapp2.0\Tests.pdb

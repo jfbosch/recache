@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>ReCache</id>
+    <version>8.0.0</version>
+    <authors>Jacques Bosch</authors>
+    <owners>Jacques Bosch</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://github.com/jfbosch/recache</projectUrl>
+    <description>A high performance, in-memory, concurrency safe, transparent generic key / value cache - basically, it makes some stuff a lot faster</description>
+    <releaseNotes>Converted to .Net Standard 2.0.</releaseNotes>
+    <copyright>Jacques Bosch</copyright>
+    <tags>cache</tags>
+    <repository url="https://github.com/jfbosch/recache" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Code\recache\ReCache\bin\Release\netstandard2.0\ReCache.dll" target="lib\netstandard2.0\ReCache.dll" />
+  </files>
+</package>

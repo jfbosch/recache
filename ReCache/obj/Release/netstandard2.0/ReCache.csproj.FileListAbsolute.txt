@@ -1,0 +1,9 @@
+C:\Code\recache\ReCache\bin\Release\netstandard2.0\ReCache.deps.json
+C:\Code\recache\ReCache\bin\Release\netstandard2.0\ReCache.dll
+C:\Code\recache\ReCache\bin\Release\netstandard2.0\ReCache.pdb
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.csproj.CoreCompileInputs.cache
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.AssemblyInfoInputs.cache
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.AssemblyInfo.cs
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.dll
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.pdb
+C:\Code\recache\ReCache\obj\Release\netstandard2.0\ReCache.csprojResolveAssemblyReference.cache

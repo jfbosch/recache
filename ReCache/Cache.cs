@@ -1,5 +1,4 @@
-﻿using ReCache.KeyValueStore;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,10 +9,6 @@ using System.Timers;
 
 namespace ReCache
 {
-	/* Read the following link and understand how ConcurrentDictionary works before modifying this class.
-	 * http://arbel.net/2013/02/03/best-practices-for-using-concurrentdictionary/
-	 */
-
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 	public class Cache<TKey, TValue> : ICache<TKey, TValue>
 	{

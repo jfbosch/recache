@@ -1,29 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>A high performance, in-memory, concurrency safe, transparent generic key / value cache - basically, it makes some stuff a lot faster</Description>
+    <Version>8.0.0</Version>
+    <Authors>Jacques Bosch</Authors>
+    <Company>Jacques Bosch</Company>
+    <Copyright>Jacques Bosch</Copyright>
+    <PackageProjectUrl>https://github.com/jfbosch/recache</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfbosch/recache</RepositoryUrl>
+    <RepositoryType />
+    <PackageTags>cache</PackageTags>
+    <PackageReleaseNotes>Converted to .Net Standard 2.0.</PackageReleaseNotes>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ReCache.nuspec" />
-  </ItemGroup>
-  <ItemGroup>
-    <CodeAnalysisDictionary Include="dictionary.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ReCache.KeyValueStore\ReCache.KeyValueStore.csproj" />
-  </ItemGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>
