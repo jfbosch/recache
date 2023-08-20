@@ -1,4 +1,4 @@
-#NB: This project is no longer being maintained. We recommend switching to Foundatio Cache https://github.com/FoundatioFx/Foundatio
+# NB: This project is no longer being maintained. We recommend switching to Foundatio Cache https://github.com/FoundatioFx/Foundatio
 ---------------------------------------
 
 ReCache
